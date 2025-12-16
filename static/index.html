@@ -49,11 +49,12 @@
         }
         .balance-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px; opacity: 0.9; font-weight: 700; margin-bottom: 5px; color: #e2e8f0; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
-        /* --- КОНТЕНТ --- */
+        /* --- КОНТЕНТ (ИЗМЕНЕНО) --- */
         .content { 
             flex: 1; display: none; flex-direction: column; align-items: center; 
             width: 100%; position: relative; overflow: hidden; 
-            padding-bottom: 90px; 
+            /* ИЗМЕНЕНО: 85px (высота меню) + 20px (отступ) = 105px */
+            padding-bottom: 105px; 
             box-sizing: border-box;
         }
         .active-page { display: flex; } 
@@ -139,6 +140,8 @@
             display: flex; flex-direction: column; gap: 8px; 
             padding-right: 2px;
             -webkit-overflow-scrolling: touch;
+            /* Добавил немного внутреннего отступа снизу списка */
+            padding-bottom: 10px;
         }
         
         .shop-list::-webkit-scrollbar { width: 5px; display: block; }
@@ -237,6 +240,8 @@
             display: flex; flex-direction: column; gap: 0; 
             border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); 
             -webkit-overflow-scrolling: touch;
+            /* Добавил немного внутреннего отступа снизу списка */
+            padding-bottom: 10px;
         }
         .leaderboard-list::-webkit-scrollbar { width: 5px; display: block; }
         .leaderboard-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 3px; }
@@ -375,7 +380,6 @@
         let ADSGRAM_BLOCK_ID = null;
 
         // --- КОНФИГУРАЦИЯ ЦЕН РАСХОДНИКОВ ---
-        // Эти данные дублируют логику сервера для мгновенного отображения в UI
         const CONSUMABLES_INFO = {
             'energy_drink': {price: 400, name_key: 'item_energy_drink', desc_key: 'desc_energy', icon: '🥤'},
             'bait_common': {price: 100, name_key: 'item_bait_common', desc_key: 'desc_bait_common', icon: '🪱'},
@@ -591,7 +595,6 @@
             }
 
             isFishing = true; 
-            // Визуально отнимаем энергию (2% по новому балансу)
             state.en = Math.max(0, state.en - 2); 
             render();
 
@@ -606,9 +609,7 @@
                 });
                 let data = await res.json();
                 
-                // Проверка на анти-клик кулдаун
                 if (data.status === "cooldown") {
-                    // Просто игнорируем или показываем песочные часы
                     isFishing = false;
                     return; 
                 }
@@ -673,7 +674,6 @@
         }
 
         async function buy(item) {
-            // Новая логика проверки цен перед отправкой запроса
             let price = 0;
             if (item === 'rod') price = state.p_rod;
             else if (item === 'boat') price = state.p_boat;
@@ -704,7 +704,6 @@
             list.innerHTML = "";
             const t = translations[currentLang];
 
-            // 1. Реклама (описание теперь берется из translations)
             list.innerHTML += `
             <div class="card" style="border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.1);">
                 <div class="card-icon">⚡</div>
@@ -716,7 +715,6 @@
             </div>`;
 
             if (currentShopTab === 'equip') {
-                // Базовый шанс теперь 30%, а не 15%
                 const chance = 30 + (state.rod * 4);
                 let btnRodText = state.p_rod ? `${state.p_rod.toLocaleString()} 💰` : "MAX";
                 let btnRodDisabled = (!state.p_rod || state.bal < state.p_rod) ? "disabled" : "";
@@ -746,7 +744,6 @@
                 </div>`;
 
             } else {
-                // Расходники: Генерация через цикл по CONSUMABLES_INFO
                 for (const [key, info] of Object.entries(CONSUMABLES_INFO)) {
                     const disabled = state.bal < info.price ? 'disabled' : '';
                     
@@ -845,8 +842,6 @@
         function render() {
             const t = translations[currentLang];
             document.getElementById('balance').innerText = state.bal.toLocaleString();
-            
-            // Обновляем футер в магазине
             document.getElementById('shop-balance-footer').innerText = `${t.score_label}: ${state.bal.toLocaleString()} 💰`;
 
             const enFill = document.getElementById('energy-fill');
