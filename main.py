@@ -27,6 +27,9 @@ config = load_config()
 
 BOT_TOKEN = config.get('bot', {}).get('token', "")
 WEBAPP_URL = config.get('bot', {}).get('webapp_url', "")
+# Читаем ссылку для кнопки "Try to catch better" из конфига
+BOT_APP_LINK = config.get('bot', {}).get('bot_app_link', "")
+
 DATABASE_URL = config.get('database', {}).get('url', "sqlite+aiosqlite:///./fishing.db")
 ADSGRAM_ID = config.get('adsgram', {}).get('block_id', "")
 
@@ -491,9 +494,12 @@ async def inline_share_catch(query: types.InlineQuery):
                   f"⚖️ <b>Weight:</b> {weight} kg\n" \
                   f"🔥 <b>Can you do better?</b>"
 
-        # Кнопка под картинкой
+        # ИСПОЛЬЗУЕМ ССЫЛКУ ИЗ КОНФИГА
+        target_url = BOT_APP_LINK if BOT_APP_LINK else f"{WEBAPP_URL}/static/index.html"
+
+        # Используем кнопку URL (100% работает) вместо web_app
         keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="🎣 Try to catch better!", web_app=WebAppInfo(url=f"{WEBAPP_URL}/static/index.html"))
+            InlineKeyboardButton(text="🎣 Try to catch better!", url=target_url)
         ]])
 
         # Создаем результат
@@ -522,7 +528,13 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn: await conn.run_sync(Base.metadata.create_all)
     webhook = await bot.get_webhook_info()
     if webhook.url: await bot.delete_webhook()
-    asyncio.create_task(dp.start_polling(bot))
+    
+    # Явно разрешаем боту получать inline_query
+    asyncio.create_task(dp.start_polling(
+        bot, 
+        allowed_updates=["message", "inline_query", "callback_query"]
+    ))
+    
     yield
     await bot.session.close()
 

@@ -1,6 +1,7 @@
 bot:
   token: "YOUR_BOT_TOKEN"
   webapp_url: "https://YOUR_WEBAPP_URL"
+  bot_app_link: "https://t.me/YOUR_BOT_URL"
 
 adsgram:
   block_id: "YOUR_ADSGRAM_ID"
