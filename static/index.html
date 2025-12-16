@@ -51,22 +51,18 @@
 
         /* --- КОНТЕНТ --- */
         .content { 
-            flex: 1; 
-            display: none; 
-            flex-direction: column; 
-            align-items: center; 
-            width: 100%; 
-            position: relative; 
-            overflow: hidden; 
+            flex: 1; display: none; flex-direction: column; align-items: center; 
+            width: 100%; position: relative; overflow: hidden; 
         }
         .active-page { display: flex; } 
         #page-game { justify-content: center; }
 
-        /* --- ИГРА --- */
+        /* --- ИГРА (Updated sizes) --- */
         .game-area { position: relative; display: flex; flex-direction: column; align-items: center; }
         
         .fish-btn { 
-            width: 240px; height: 240px; border-radius: 50%; 
+            /* УВЕЛИЧЕНО: Было 240px, стало 320px */
+            width: 320px; height: 320px; border-radius: 50%; 
             background: url('/static/images/float.png') center/contain no-repeat;
             filter: drop-shadow(0 20px 50px rgba(0,0,0,0.5));
             cursor: pointer; transition: transform 0.1s; z-index: 10; position: relative;
@@ -74,7 +70,8 @@
         }
         .fish-btn:active { transform: scale(0.94); }
         .fish-btn::after {
-            content: ''; position: absolute; width: 180px; height: 180px; bottom: 15px; left: 50%; margin-left: -90px;
+            /* УВЕЛИЧЕНО: Было 180px, стало 260px. Отступ (margin-left) половина ширины */
+            content: ''; position: absolute; width: 260px; height: 260px; bottom: 15px; left: 50%; margin-left: -130px;
             border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.3);
             animation: ripple 2s infinite; z-index: -1; opacity: 0; pointer-events: none;
         }
@@ -89,39 +86,117 @@
         .energy-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); transition: width 0.3s; box-shadow: 0 0 10px rgba(59, 130, 246, 0.6); }
         .energy-text { font-size: 0.75rem; color: #fff; font-weight: 700; letter-spacing: 0.5px; }
 
-        /* --- МАГАЗИН --- */
-        #page-shop { overflow-y: auto; padding-bottom: 20px; }
+        /* --- МАГАЗИН (Updated Padding) --- */
+        #page-shop { 
+            height: 100%; 
+            /* ИЗМЕНЕНО: Было 20px, стало 80px чтобы не наезжать на флаги */
+            padding-top: 80px; 
+            padding-bottom: 20px;
+            box-sizing: border-box;
+            justify-content: flex-start;
+        }
+
+        .shop-panel {
+            width: 94%;
+            flex: 1; 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(15px);
+            border-radius: 24px;
+            border: var(--glass-border);
+            padding: 20px 15px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); 
+        }
+
+        .top-header {
+            color: #fff; 
+            margin: 0 0 15px 0; 
+            text-transform: uppercase; letter-spacing: 2px; font-weight: 900; font-size: 1.1rem;
+            text-align: center;
+            text-shadow: 0 2px 10px rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+
+        .shop-inventory {
+            display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; flex-shrink: 0;
+        }
+        .inv-item {
+            background: rgba(255,255,255,0.1); border-radius: 12px; padding: 6px 12px;
+            display: flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 700; color: #cbd5e1;
+        }
+
+        .shop-list { 
+            width: 100%; 
+            flex: 1; 
+            overflow-y: auto; 
+            scrollbar-width: none; 
+            display: flex; flex-direction: column; gap: 8px; 
+        }
+        .shop-list::-webkit-scrollbar { display: none; }
+
         .card { 
-            background: var(--glass-bg); backdrop-filter: blur(10px);
-            width: var(--content-width); 
-            padding: 16px; margin: 6px 0; border-radius: 20px; display: flex; align-items: center; 
-            border: var(--glass-border); box-sizing: border-box;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            background: rgba(30, 41, 59, 0.7); 
+            width: 100%; 
+            padding: 14px 16px; 
+            border-radius: 16px; 
+            display: flex; align-items: center; 
+            border: 1px solid rgba(255,255,255,0.08); 
+            box-sizing: border-box;
+            flex-shrink: 0;
         }
         .card:active { transform: scale(0.98); }
-        .card-icon { font-size: 2.2rem; margin-right: 15px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+        .card-icon { font-size: 2rem; margin-right: 15px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
         .card-info { flex: 1; }
-        .card-title { font-weight: 800; font-size: 1.1rem; color: #fff; }
-        .card-sub { font-size: 0.85rem; color: #94a3b8; margin-top: 3px; font-weight: 600; }
+        .card-title { font-weight: 800; font-size: 1rem; color: #fff; }
+        .card-sub { font-size: 0.8rem; color: #94a3b8; margin-top: 3px; font-weight: 600; }
         
-        .btn { background: var(--blue); color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); text-transform: uppercase; min-width: 75px; }
-        .btn:disabled { background: #334155; opacity: 0.6; box-shadow: none; color: #64748b; }
-        .btn-ad { background: var(--green); color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; animation: pulse 2s infinite; cursor: pointer; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4); text-transform: uppercase; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+        .btn { background: var(--blue); color: white; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); text-transform: uppercase; min-width: 70px; }
+        .btn:disabled { background: #334155; opacity: 0.6; box-shadow: none; color: #64748b; pointer-events: none; }
+        .btn-ad { background: var(--green); color: white; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; animation: pulse 2s infinite; cursor: pointer; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3); text-transform: uppercase; min-width: 70px; }
+
+        /* Стиль для футера в магазине */
+        .shop-footer-balance {
+            margin-top: 15px;
+            font-size: 1rem;
+            color: var(--gold);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            flex-shrink: 0;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+        }
 
         /* --- ЭФФЕКТЫ --- */
         .float-text { position: absolute; font-weight: 900; font-size: 2rem; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 100; white-space: nowrap; text-shadow: 0 4px 10px rgba(0,0,0,0.8); -webkit-text-stroke: 1px rgba(0,0,0,0.2); }
         @keyframes floatUp { 0% { opacity: 0; transform: translateY(20px) scale(0.5); } 20% { opacity: 1; transform: translateY(0) scale(1.2); } 100% { opacity: 0; transform: translateY(-100px) scale(1); } }
 
+        /* --- POPUP --- */
         .catch-popup {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
-            background: rgba(15, 23, 42, 0.98); border: 1px solid var(--gold);
-            padding: 30px; border-radius: 28px; text-align: center; z-index: 200;
+            position: fixed !important; 
+            top: 50% !important; 
+            left: 50% !important; 
+            transform: translate(-50%, -50%) scale(0.8) !important;
+            background: rgba(15, 23, 42, 0.98); 
+            border: 1px solid var(--gold);
+            padding: 30px; 
+            border-radius: 28px; 
+            text-align: center; 
+            z-index: 1000 !important; 
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            pointer-events: none; opacity: 0; box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+            pointer-events: none; 
+            opacity: 0; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.9);
             width: 75%;
+            max-width: 320px;
         }
-        .catch-popup.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        .catch-popup.show { 
+            transform: translate(-50%, -50%) scale(1) !important; 
+            opacity: 1 !important; 
+        }
         .catch-img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 15px; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.6)); }
         .catch-title { font-size: 1.4rem; font-weight: 900; color: white; margin-bottom: 8px; letter-spacing: 0.5px; }
         .catch-reward { font-size: 1.6rem; font-weight: 800; color: var(--gold); }
@@ -138,116 +213,32 @@
         .nav-item.active { color: var(--blue); transform: translateY(-3px); text-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
         .nav-icon { font-size: 1.6rem; margin-bottom: 4px; }
         
-        /* --- ВЕРСТКА ДЛЯ СЕКЦИИ ТОП (Flex Scroll Fix) --- */
-        
-        #page-top {
+        /* --- ТОП (Updated Padding) --- */
+        #page-top { 
             height: 100%; 
-            padding-top: 20px; 
-            padding-bottom: 20px;
-            box-sizing: border-box;
-            display: none; 
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
+            /* ИЗМЕНЕНО: Было 20px, стало 80px чтобы контент был ниже флагов */
+            padding-top: 80px; 
+            padding-bottom: 20px; box-sizing: border-box; display: none; flex-direction: column; align-items: center; justify-content: flex-start; 
         }
-
-        .leaderboard-panel {
-            width: 94%;
-            flex: 1; 
-            background: var(--glass-bg); 
-            backdrop-filter: blur(15px);
-            border-radius: 24px;
-            border: var(--glass-border);
-            padding: 20px 15px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            min-height: 0; /* Важно для работы flex-scroll */
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5); 
-        }
-
-        .top-header {
-            color: #fff; 
-            margin: 0 0 15px 0; 
-            text-transform: uppercase; letter-spacing: 2px; font-weight: 900; font-size: 1.1rem;
-            text-align: center;
-            text-shadow: 0 2px 10px rgba(255,255,255,0.2);
-            flex-shrink: 0;
-        }
-
-        .tabs-container { 
-            width: 100%; 
-            display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; 
-            flex-shrink: 0; 
-        }
-        
-        .tabs-row { 
-            display: flex; justify-content: space-between; 
-            background: rgba(0, 0, 0, 0.4); 
-            border-radius: 12px; padding: 4px; 
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-        
-        .tab { 
-            flex: 1; text-align: center; padding: 8px 0; 
-            font-size: 0.8rem; border-radius: 10px; cursor: pointer; 
-            color: #94a3b8; font-weight: 700; transition: all 0.2s ease; 
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-        }
-        
+        .leaderboard-panel { width: 94%; flex: 1; background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 24px; border: var(--glass-border); padding: 20px 15px; box-sizing: border-box; display: flex; flex-direction: column; min-height: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .tabs-container { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; flex-shrink: 0; }
+        .tabs-row { display: flex; justify-content: space-between; background: rgba(0, 0, 0, 0.4); border-radius: 12px; padding: 4px; border: 1px solid rgba(255,255,255,0.05); }
+        .tab { flex: 1; text-align: center; padding: 8px 0; font-size: 0.8rem; border-radius: 10px; cursor: pointer; color: #94a3b8; font-weight: 700; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .tab.active { background: var(--blue); color: white; box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4); }
-        .tab:active { transform: scale(0.96); }
-
-        /* СКРОЛЛИТСЯ ТОЛЬКО ЭТОТ БЛОК */
-        .leaderboard-list { 
-            width: 100%; 
-            flex: 1; 
-            overflow-y: auto; 
-            scrollbar-width: none; 
-            display: flex; flex-direction: column; gap: 0; 
-            border-top: 1px solid rgba(255,255,255,0.05);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
+        .leaderboard-list { width: 100%; flex: 1; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 0; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
         .leaderboard-list::-webkit-scrollbar { display: none; }
-
-        .leader-row { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 14px 8px; 
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            font-weight: 600; font-size: 0.95rem; color: #f1f5f9; 
-            flex-shrink: 0;
-        }
+        .leader-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); font-weight: 600; font-size: 0.95rem; color: #f1f5f9; flex-shrink: 0; }
         .leader-row:last-child { border-bottom: none; }
-        
         .leader-left { display: flex; align-items: center; gap: 12px; }
-        
-        .leader-rank { 
-            width: 26px; height: 26px; 
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,0.1); border-radius: 6px;
-            font-size: 0.8rem; color: #94a3b8; font-weight: 800;
-        }
+        .leader-rank { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 0.8rem; color: #94a3b8; font-weight: 800; }
         .leader-val { color: var(--gold); text-align: right; font-weight: 800; font-family: 'Segoe UI', sans-serif; }
-        
         .rank-1 .leader-rank { background: none; font-size: 1.5rem; text-shadow: 0 0 15px rgba(250, 204, 21, 0.5); }
         .rank-1 { color: #facc15; text-shadow: 0 0 10px rgba(250, 204, 21, 0.2); }
         .rank-2 .leader-rank { background: none; font-size: 1.5rem; text-shadow: 0 0 15px rgba(203, 213, 225, 0.5); }
         .rank-2 { color: #e2e8f0; }
         .rank-3 .leader-rank { background: none; font-size: 1.5rem; text-shadow: 0 0 15px rgba(251, 146, 60, 0.5); }
         .rank-3 { color: #fdba74; }
-
-        .total-players {
-            margin-top: 15px;
-            font-size: 0.75rem;
-            color: #64748b;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.8;
-            flex-shrink: 0;
-            text-align: center;
-        }
-
+        .total-players { margin-top: 15px; font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; flex-shrink: 0; text-align: center; }
     </style>
 </head>
 <body>
@@ -288,30 +279,28 @@
     </div>
 
     <div id="page-shop" class="content">
-        <h3 style="color:#cbd5e1; margin-top:25px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px; font-size:0.9rem;" data-t="shop_title">Equipment Market</h3>
-        <div class="card" style="border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.1);">
-            <div class="card-icon">⚡</div>
-            <div class="card-info">
-                <div class="card-title" data-t="ad_title">Free Energy</div>
-                <div class="card-sub" data-t="ad_desc">+2000 Coins & Full Energy</div>
+        <div class="shop-panel">
+            <div class="top-header" data-t="shop_title">Equipment Market</div>
+            
+            <div class="shop-inventory">
+                <div class="inv-item">🪱 <span id="inv-bait-common">0</span></div>
+                <div class="inv-item">🐟 <span id="inv-bait-rare">0</span></div>
             </div>
-            <button class="btn-ad" onclick="showAd()" data-t="ad_btn">WATCH</button>
-        </div>
-        <div class="card">
-            <div class="card-icon">🎣</div>
-            <div class="card-info">
-                <div class="card-title" data-t="item_rod">Rod</div>
-                <div class="card-sub" id="rod-desc">Lvl 1</div>
+
+            <div class="tabs-container">
+                <div class="tabs-row">
+                    <div class="tab active" onclick="switchShopTab('equip', this)">
+                        <span class="tab-icon">🎣</span> <span data-t="shop_equip">Equipment</span>
+                    </div>
+                    <div class="tab" onclick="switchShopTab('consum', this)">
+                        <span class="tab-icon">🧪</span> <span data-t="shop_consum">Consumables</span>
+                    </div>
+                </div>
             </div>
-            <button class="btn" id="btn-rod" onclick="buy('rod')">...</button>
-        </div>
-        <div class="card">
-            <div class="card-icon">🚤</div>
-            <div class="card-info">
-                <div class="card-title" data-t="item_boat">Boat (AFK)</div>
-                <div class="card-sub" id="boat-desc">None</div>
-            </div>
-            <button class="btn" id="btn-boat" onclick="buy('boat')">...</button>
+
+            <div id="shop-list" class="shop-list"></div>
+            
+            <div id="shop-balance-footer" class="shop-footer-balance"></div>
         </div>
     </div>
 
@@ -341,7 +330,6 @@
             </div>
 
             <div id="leaderboard-list" class="leaderboard-list"></div>
-            
             <div id="total-players-count" class="total-players"></div>
         </div>
     </div>
@@ -373,52 +361,68 @@
 
         const translations = {
             en: {
-                score_label: "BALANCE", shop_title: "Equipment Market", item_rod: "Spinning Rod", item_boat: "Trawler (AFK)",
+                score_label: "BALANCE", shop_title: "Fishing Market", item_rod: "Spinning Rod", item_boat: "Trawler (AFK)",
                 top_title: "Hall of Fame", nav_game: "Game", nav_shop: "Shop", nav_top: "Top",
                 no_energy: "No energy 💤", miss: "Missed!", caught: "Caught:", lvl: "Lvl", chance: "Chance",
                 none: "None", buy_success: "Purchased!", afk_income: "AFK Income:", coins: "coins", loading: "Loading...",
-                ad_title: "Full Energy", ad_desc: "+2000 Coins & Full Energy", ad_btn: "WATCH",
+                ad_title: "Free Energy", ad_desc: "+2000 Coins & Full Energy", ad_btn: "WATCH",
                 energy_label: "Energy",
                 top_rich: "Rich", top_fish: "Fisher", top_eco: "Eco",
                 period_week: "Week", period_month: "Month", period_year: "Year", period_all: "All",
                 unit_kg: "kg", unit_pc: "pc.",
-                empty_list: "Empty list...", total_players: "Total players:"
+                empty_list: "Empty list...", total_players: "Total players:",
+                shop_equip: "Equipment", shop_consum: "Consumables",
+                item_energy_drink: "Energy Drink", desc_energy: "Restore 50% Energy",
+                item_bait_common: "Worms (10x)", desc_bait_common: "+10% Chance",
+                item_bait_rare: "Live Bait (5x)", desc_bait_rare: "+30% Chance & No Trash"
             },
             ru: {
-                score_label: "БАЛАНС", shop_title: "Рынок Снастей", item_rod: "Спиннинг", item_boat: "Траулер (AFK)",
+                score_label: "БАЛАНС", shop_title: "Рыболовный Рынок", item_rod: "Спиннинг", item_boat: "Траулер (AFK)",
                 top_title: "Зал Славы", nav_game: "Игра", nav_shop: "Рынок", nav_top: "Топ",
                 no_energy: "Нет сил 💤", miss: "Сорвалась!", caught: "Пойман:", lvl: "Ур.", chance: "Шанс",
                 none: "Нет", buy_success: "Куплено!", afk_income: "AFK доход:", coins: "монет", loading: "Загрузка...",
-                ad_title: "Восстановить силы", ad_desc: "+2000 монет и полная энергия", ad_btn: "ВИДЕО",
+                ad_title: "Бесплатная Энергия", ad_desc: "+2000 монет и полная энергия", ad_btn: "ВИДЕО",
                 energy_label: "Запас сил",
                 top_rich: "Богачи", top_fish: "Рыбаки", top_eco: "Экологи",
                 period_week: "Неделя", period_month: "Месяц", period_year: "Год", period_all: "Всё",
                 unit_kg: "кг", unit_pc: "шт.",
-                empty_list: "Список пуст...", total_players: "Всего игроков:"
+                empty_list: "Список пуст...", total_players: "Всего игроков:",
+                shop_equip: "Снасти", shop_consum: "Припасы",
+                item_energy_drink: "Энергетик", desc_energy: "Восст. 50% сил",
+                item_bait_common: "Черви (10шт)", desc_bait_common: "+10% к шансу",
+                item_bait_rare: "Живец (5шт)", desc_bait_rare: "+30% шанс, без мусора"
             },
             es: {
-                score_label: "BALANCE", shop_title: "Tienda de Pesca", item_rod: "Caña de Pescar", item_boat: "Barco (AFK)",
+                score_label: "BALANCE", shop_title: "Mercado de Pesca", item_rod: "Caña de Pescar", item_boat: "Barco (AFK)",
                 top_title: "Salón de la Fama", nav_game: "Juego", nav_shop: "Tienda", nav_top: "Top",
                 no_energy: "Sin energía 💤", miss: "¡Fallaste!", caught: "Captura:", lvl: "Nvl", chance: "Prob.",
                 none: "Ninguno", buy_success: "¡Comprado!", afk_income: "Ingresos AFK:", coins: "monedas", loading: "Cargando...",
-                ad_title: "Energía completa", ad_desc: "+2000 monedas y 100% energía", ad_btn: "VER",
+                ad_title: "Energía Gratis", ad_desc: "+2000 monedas y 100% energía", ad_btn: "VER",
                 energy_label: "Energía",
                 top_rich: "Ricos", top_fish: "Pescador", top_eco: "Eco",
                 period_week: "Semana", period_month: "Mes", period_year: "Año", period_all: "Todo",
                 unit_kg: "kg", unit_pc: "pz.",
-                empty_list: "Lista vacía...", total_players: "Jugadores totales:"
+                empty_list: "Lista vacía...", total_players: "Jugadores totales:",
+                shop_equip: "Equipo", shop_consum: "Consumibles",
+                item_energy_drink: "Bebida Energética", desc_energy: "Restaura 50% Energía",
+                item_bait_common: "Gusanos (10x)", desc_bait_common: "+10% Probabilidad",
+                item_bait_rare: "Cebo Vivo (5x)", desc_bait_rare: "+30% Prob. & Sin Basura"
             },
             zh: {
                 score_label: "余额", shop_title: "渔具商店", item_rod: "鱼竿", item_boat: "渔船 (挂机)",
                 top_title: "名人堂", nav_game: "捕鱼", nav_shop: "商店", nav_top: "排行",
                 no_energy: "没有能量 💤", miss: "跑了!", caught: "钓到了:", lvl: "等级", chance: "几率",
                 none: "无", buy_success: "购买成功!", afk_income: "离线收益:", coins: "金币", loading: "加载中...",
-                ad_title: "恢复能量", ad_desc: "+2000金币 & 100%能量", ad_btn: "观看",
+                ad_title: "免费能量", ad_desc: "+2000金币 & 100%能量", ad_btn: "观看",
                 energy_label: "能量",
                 top_rich: "富豪", top_fish: "渔夫", top_eco: "生态",
                 period_week: "周", period_month: "月", period_year: "年", period_all: "总榜",
                 unit_kg: "kg", unit_pc: "个",
-                empty_list: "列表为空...", total_players: "玩家总数:"
+                empty_list: "列表为空...", total_players: "玩家总数:",
+                shop_equip: "装备", shop_consum: "消耗品",
+                item_energy_drink: "能量饮料", desc_energy: "恢复 50% 能量",
+                item_bait_common: "蠕虫 (10个)", desc_bait_common: "+10% 几率",
+                item_bait_rare: "活饵 (5个)", desc_bait_rare: "+30% 几率 & 无垃圾"
             }
         };
 
@@ -456,13 +460,14 @@
         };
 
         let currentLang = 'en'; 
-        let state = { bal: 0, en: 100, rod: 1, boat: 0, p_rod: 0, p_boat: 0 };
+        let state = { bal: 0, en: 100, rod: 1, boat: 0, p_rod: 0, p_boat: 0, bait_c: 0, bait_r: 0 };
         let isMuted = false; 
         let musicStarted = false;
         let isFishing = false;
 
         let currentTopType = 'balance';
         let currentTopPeriod = 'all';
+        let currentShopTab = 'equip';
 
         function setLanguage(lang) {
             currentLang = lang;
@@ -473,11 +478,9 @@
                 if (translations[lang][key]) el.innerText = translations[lang][key];
             });
             render();
+            renderShop();
             localStorage.setItem('fishing_lang', lang);
             
-            // --- ЛОГИКА: ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ТОПА ---
-            // Если мы находимся на вкладке "Топ", перезагружаем данные,
-            // чтобы надписи "кг", "шт" и "Всего игроков" обновились на новый язык.
             const pageTop = document.getElementById('page-top');
             if(pageTop.style.display !== 'none' && pageTop.style.display !== '') {
                 loadTop();
@@ -581,8 +584,12 @@
                     headers: {'Content-Type': 'application/json'}
                 });
                 let data = await res.json();
+                
                 state.bal = data.balance;
                 state.en = data.energy; 
+                if(data.bait_common !== undefined) state.bait_c = data.bait_common;
+                if(data.bait_rare !== undefined) state.bait_r = data.bait_rare;
+                render(); 
 
                 if (data.afk_earned && data.afk_earned > 0) showFloat(e.clientX + 50, e.clientY - 50, `+${data.afk_earned} 🚤`, "#60a5fa");
 
@@ -638,7 +645,14 @@
         }
 
         async function buy(item) {
-            let price = (item === 'rod') ? state.p_rod : state.p_boat;
+            // Цены для быстрой проверки на клиенте
+            const PRICES = { 'energy_drink': 500, 'bait_common': 100, 'bait_rare': 1000 };
+            
+            let price = 0;
+            if (item === 'rod') price = state.p_rod;
+            else if (item === 'boat') price = state.p_boat;
+            else if (PRICES[item]) price = PRICES[item];
+
             if (state.bal < price) { tg.HapticFeedback.notificationOccurred('error'); return; }
 
             let res = await fetch('/api/upgrade', { method: 'POST', body: JSON.stringify({telegram_id: uid, item_id: item}), headers: {'Content-Type': 'application/json'} });
@@ -648,6 +662,102 @@
                 tg.HapticFeedback.notificationOccurred('success');
                 tg.showAlert(translations[currentLang].buy_success);
                 updateState(data);
+            }
+        }
+
+        function switchShopTab(tabName, el) {
+            currentShopTab = tabName;
+            el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            renderShop();
+            tg.HapticFeedback.selectionChanged();
+        }
+
+        function renderShop() {
+            const list = document.getElementById('shop-list');
+            list.innerHTML = "";
+            const t = translations[currentLang];
+
+            // 1. Реклама
+            list.innerHTML += `
+            <div class="card" style="border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.1);">
+                <div class="card-icon">⚡</div>
+                <div class="card-info">
+                    <div class="card-title">${t.ad_title}</div>
+                    <div class="card-sub">${t.ad_desc}</div>
+                </div>
+                <button class="btn-ad" onclick="showAd()">${t.ad_btn}</button>
+            </div>`;
+
+            if (currentShopTab === 'equip') {
+                const chance = 15 + (state.rod * 3);
+                let btnRodText = state.p_rod ? `${state.p_rod.toLocaleString()} 💰` : "MAX";
+                let btnRodDisabled = (!state.p_rod || state.bal < state.p_rod) ? "disabled" : "";
+                
+                list.innerHTML += `
+                <div class="card">
+                    <div class="card-icon">🎣</div>
+                    <div class="card-info">
+                        <div class="card-title">${t.item_rod}</div>
+                        <div class="card-sub">${t.lvl} ${state.rod} (${t.chance} ${chance}%)</div>
+                    </div>
+                    <button class="btn" onclick="buy('rod')" ${btnRodDisabled}>${btnRodText}</button>
+                </div>`;
+
+                let btnBoatText = state.p_boat ? `${state.p_boat.toLocaleString()} 💰` : "MAX";
+                let btnBoatDisabled = (!state.p_boat || state.bal < state.p_boat) ? "disabled" : "";
+                let boatDesc = state.boat ? `${t.lvl} ${state.boat}` : t.none;
+
+                list.innerHTML += `
+                <div class="card">
+                    <div class="card-icon">🚤</div>
+                    <div class="card-info">
+                        <div class="card-title">${t.item_boat}</div>
+                        <div class="card-sub">${boatDesc}</div>
+                    </div>
+                    <button class="btn" onclick="buy('boat')" ${btnBoatDisabled}>${btnBoatText}</button>
+                </div>`;
+
+            } else {
+                // Расходники: ПРОВЕРКА БАЛАНСА
+                const pEnergy = 500;
+                const btnEnergyDisabled = state.bal < pEnergy ? 'disabled' : '';
+                
+                list.innerHTML += `
+                <div class="card">
+                    <div class="card-icon">🥤</div>
+                    <div class="card-info">
+                        <div class="card-title">${t.item_energy_drink}</div>
+                        <div class="card-sub">${t.desc_energy}</div>
+                    </div>
+                    <button class="btn" onclick="buy('energy_drink')" ${btnEnergyDisabled}>500 💰</button>
+                </div>`;
+
+                const pBaitCommon = 100;
+                const btnCommonDisabled = state.bal < pBaitCommon ? 'disabled' : '';
+
+                list.innerHTML += `
+                <div class="card">
+                    <div class="card-icon">🪱</div>
+                    <div class="card-info">
+                        <div class="card-title">${t.item_bait_common}</div>
+                        <div class="card-sub">${t.desc_bait_common}</div>
+                    </div>
+                    <button class="btn" onclick="buy('bait_common')" ${btnCommonDisabled}>100 💰</button>
+                </div>`;
+
+                const pBaitRare = 1000;
+                const btnRareDisabled = state.bal < pBaitRare ? 'disabled' : '';
+
+                list.innerHTML += `
+                <div class="card">
+                    <div class="card-icon">🐟</div>
+                    <div class="card-info">
+                        <div class="card-title">${t.item_bait_rare}</div>
+                        <div class="card-sub">${t.desc_bait_rare}</div>
+                    </div>
+                    <button class="btn" onclick="buy('bait_rare')" ${btnRareDisabled}>1000 💰</button>
+                </div>`;
             }
         }
 
@@ -681,7 +791,6 @@
                     data.leaderboard.forEach((u, i) => {
                         let rankClass = "";
                         let rankIcon = i + 1;
-
                         if (i === 0) { rankClass = "rank-1"; rankIcon = "🥇"; }
                         if (i === 1) { rankClass = "rank-2"; rankIcon = "🥈"; }
                         if (i === 2) { rankClass = "rank-3"; rankIcon = "🥉"; }
@@ -724,12 +833,20 @@
             state.boat = data.boat_level;
             state.p_rod = data.rod_price;
             state.p_boat = data.boat_price;
+            if(data.bait_common !== undefined) state.bait_c = data.bait_common;
+            if(data.bait_rare !== undefined) state.bait_r = data.bait_rare;
+            
             render();
+            renderShop();
         }
 
         function render() {
             const t = translations[currentLang];
             document.getElementById('balance').innerText = state.bal.toLocaleString();
+            
+            // Обновляем футер в магазине
+            document.getElementById('shop-balance-footer').innerText = `${t.score_label}: ${state.bal.toLocaleString()} 💰`;
+
             const enFill = document.getElementById('energy-fill');
             let c1 = '#3b82f6', c2 = '#60a5fa'; 
             if (state.en <= 50) { c1 = '#ca8a04'; c2 = '#facc15'; } 
@@ -740,30 +857,26 @@
             else enFill.style.boxShadow = "0 0 10px rgba(59, 130, 246, 0.5)";
             document.getElementById('energy-text').innerText = Math.floor(state.en) + "% " + t.energy_label;
             
-            const btnRod = document.getElementById('btn-rod');
-            const chance = 15 + (state.rod * 3);
-            document.getElementById('rod-desc').innerText = `${t.lvl} ${state.rod} (${t.chance} ${chance}%)`;
-            if(state.p_rod) { btnRod.innerText = `${state.p_rod.toLocaleString()} 💰`; btnRod.disabled = state.bal < state.p_rod; } else { btnRod.innerText = "MAX"; btnRod.disabled = true; }
-
-            const btnBoat = document.getElementById('btn-boat');
-            document.getElementById('boat-desc').innerText = state.boat ? `${t.lvl} ${state.boat}` : t.none;
-            if(state.p_boat) { btnBoat.innerText = `${state.p_boat.toLocaleString()} 💰`; btnBoat.disabled = state.bal < state.p_boat; } else { btnBoat.innerText = "MAX"; btnBoat.disabled = true; }
+            document.getElementById('inv-bait-common').innerText = state.bait_c;
+            document.getElementById('inv-bait-rare').innerText = state.bait_r;
         }
 
         function tab(name, el) {
             document.querySelectorAll('.content').forEach(d => d.style.display = 'none');
             document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active'));
-            document.getElementById('page-'+name).style.display = (name === 'top') ? 'flex' : 'flex';
+            document.getElementById('page-'+name).style.display = (name === 'top') ? 'flex' : (name === 'shop' ? 'flex' : 'flex');
+            // Для всех используем flex, у каждого #page свои настройки
             el.classList.add('active');
             
             const balContainer = document.getElementById('main-balance-display');
-            if (name === 'top') {
+            if (name === 'top' || name === 'shop') {
                 balContainer.style.display = 'none';
             } else {
                 balContainer.style.display = 'block';
             }
 
             if(name === 'top') loadTop();
+            if(name === 'shop') renderShop();
             tg.HapticFeedback.selectionChanged();
         }
 
