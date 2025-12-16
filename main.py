@@ -9,7 +9,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import WebAppInfo, InlineQueryResultPhoto, InlineKeyboardMarkup, InlineKeyboardButton
+# Импортируем нужные типы для Inline Mode
+from aiogram.types import (
+    WebAppInfo, 
+    InlineQueryResultArticle, 
+    InputTextMessageContent, 
+    InlineKeyboardMarkup, 
+    InlineKeyboardButton
+)
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, BigInteger, Integer, String, Float, Boolean, DateTime, desc, select, func
@@ -27,8 +34,8 @@ config = load_config()
 
 BOT_TOKEN = config.get('bot', {}).get('token', "")
 WEBAPP_URL = config.get('bot', {}).get('webapp_url', "")
-# Читаем ссылку для кнопки "Try to catch better" из конфига
-BOT_APP_LINK = config.get('bot', {}).get('bot_app_link', "")
+# Ссылка на запуск игры. Если нет, пытаемся собрать из WEBAPP_URL
+BOT_APP_LINK = config.get('bot', {}).get('bot_app_link', f"{WEBAPP_URL}/static/index.html")
 
 DATABASE_URL = config.get('database', {}).get('url', "sqlite+aiosqlite:///./fishing.db")
 ADSGRAM_ID = config.get('adsgram', {}).get('block_id', "")
@@ -334,7 +341,7 @@ async def fish_action(data: ClickRequest):
             "status": "caught", 
             "fish_id": fish['id'], "fish_emoji": fish['emoji'], "fish_color": fish['color'],
             "reward": reward, "weight": weight, "is_trash": fish['is_trash'],
-            "rarity": fish.get('rarity', 1),
+            "rarity": fish.get('rarity', 1), # Добавили редкость для шаринга
             "balance": user.balance, "energy": int(user.energy), 
             "afk_earned": afk_earned,
             "bait_common": user.bait_common,
@@ -462,65 +469,64 @@ async def start_command(message: types.Message):
     markup = types.InlineKeyboardMarkup(inline_keyboard=[[types.InlineKeyboardButton(text="🎣 Play", web_app=WebAppInfo(url=f"{WEBAPP_URL}/static/index.html"))]])
     await message.answer("Let's go fishing!", reply_markup=markup)
 
-# --- INLINE MODE (ПОДЕЛИТЬСЯ УЛОВОМ) ---
+# --- ИСПРАВЛЕННЫЙ INLINE HANDLER (Поддержка PNG и Article) ---
 @dp.inline_query()
 async def inline_share_catch(query: types.InlineQuery):
     text = query.query.strip()
     
+    # ЛОГИРУЕМ ЗАПРОС (для отладки)
+    logging.info(f"INLINE QUERY RECEIVED: {text}")
+
     # Ожидаем формат запроса: "fish_id|weight|rarity"
-    # Если придет мусор, просто игнорируем
     if not text or "|" not in text:
         return
 
     try:
-        # Разбиваем текст по разделителю
         parts = text.split("|")
-        
-        # Берем данные, только если есть хотя бы 2 части (id и weight)
-        if len(parts) < 2:
-            return
+        # Берем данные, только если есть хотя бы 2 части
+        if len(parts) < 2: return
             
         fish_id = parts[0]
         weight = parts[1]
-        # rarity = parts[2] # Пока не используем, но в строке оно есть
         
-        # Ссылка на картинку (ВАЖНО: Должна быть HTTPS и доступна из интернета)
-        # Убедитесь, что в config.yaml WEBAPP_URL ведет на реальный домен
-        thumb_url = f"{WEBAPP_URL}/static/images/{fish_id}.png"
+        # Ссылка на картинку. Удаляем trailing slash у WEBAPP_URL, если есть.
+        base_url = WEBAPP_URL.rstrip('/')
+        thumb_url = f"{base_url}/static/images/{fish_id}.png"
+        logging.info(f"Generated Thumb URL: {thumb_url}")
         
-        # Формируем текст сообщения
-        caption = f"🎣 <b>Look at this catch!</b>\n\n" \
-                  f"🐠 <b>Fish:</b> {fish_id.capitalize()}\n" \
-                  f"⚖️ <b>Weight:</b> {weight} kg\n" \
-                  f"🔥 <b>Can you do better?</b>"
+        # ХАК: Используем невидимую ссылку (zero-width char) для превью картинки.
+        # Это позволяет отправлять PNG (InlineQueryResultPhoto требует JPG).
+        html_content = f"<a href='{thumb_url}'>&#8203;</a>" \
+                       f"🎣 <b>Look at this catch!</b>\n\n" \
+                       f"🐠 <b>Fish:</b> {fish_id.capitalize()}\n" \
+                       f"⚖️ <b>Weight:</b> {weight} kg\n" \
+                       f"🔥 <b>Can you do better?</b>"
 
-        # ИСПОЛЬЗУЕМ ССЫЛКУ ИЗ КОНФИГА
-        target_url = BOT_APP_LINK if BOT_APP_LINK else f"{WEBAPP_URL}/static/index.html"
-
-        # Используем кнопку URL (100% работает) вместо web_app
+        # ИСПОЛЬЗУЕМ КНОПКУ URL ВМЕСТО WEB_APP (чтобы избежать ошибки BUTTON_TYPE_INVALID)
         keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="🎣 Try to catch better!", url=target_url)
+            InlineKeyboardButton(text="🎣 Try to catch better!", url=BOT_APP_LINK)
         ]])
 
-        # Создаем результат
-        # id должен быть уникальным для каждого запроса, используем хэш
+        # Создаем результат типа ARTICLE
         result_id = hashlib.md5(text.encode()).hexdigest()
 
-        result = InlineQueryResultPhoto(
+        result = InlineQueryResultArticle(
             id=result_id,
-            photo_url=thumb_url,
-            thumbnail_url=thumb_url,
-            title="Share Catch",
-            caption=caption,
-            parse_mode="HTML",
+            title=f"Share {fish_id.capitalize()}",
+            description=f"Weight: {weight} kg",
+            thumbnail_url=thumb_url, # Если Телеграм не сможет загрузить PNG в меню выбора, он покажет плейсхолдер, но не ошибку
+            input_message_content=InputTextMessageContent(
+                message_text=html_content,
+                parse_mode="HTML",
+                disable_web_page_preview=False # ВАЖНО: Разрешаем превью, чтобы показалась большая картинка
+            ),
             reply_markup=keyboard
         )
 
-        # cache_time=0 чтобы при отладке изменения применялись сразу
         await query.answer([result], cache_time=0, is_personal=True)
+        logging.info("Inline answer sent successfully")
         
     except Exception as e:
-        # Логируем ошибку, чтобы видеть её в консоли
         logging.error(f"Inline error: {e}")
 
 @asynccontextmanager
@@ -529,7 +535,7 @@ async def lifespan(app: FastAPI):
     webhook = await bot.get_webhook_info()
     if webhook.url: await bot.delete_webhook()
     
-    # Явно разрешаем боту получать inline_query
+    # !!! ВАЖНО !!! Явно разрешаем боту получать inline_query
     asyncio.create_task(dp.start_polling(
         bot, 
         allowed_updates=["message", "inline_query", "callback_query"]
