@@ -1,0 +1,6 @@
+.venv/
+_main.py
+gen_sound.py
+docker-compose.yml
+config.yaml
+__pycache__/

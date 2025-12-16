@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+aiogram
+python-multipart
+sqlalchemy
+asyncpg
+pydantic-settings
+pyyaml

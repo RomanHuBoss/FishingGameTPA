@@ -1,0 +1,10 @@
+bot:
+  token: "YOUR_BOT_TOKEN"
+  webapp_url: "https://YOUR_WEBAPP_URL"
+
+adsgram:
+  block_id: "YOUR_ADSGRAM_ID"
+
+# Можно добавить настройки БД сюда же, чтобы не хранить пароли в коде
+database:
+  url: "postgresql+asyncpg://DB_USER:DB_PASSWORD@DB_HOST/fishing_db"

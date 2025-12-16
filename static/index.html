@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fishing TPA</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <style>
+        /* --- СТИЛИ (DESIGN) --- */
+        :root { 
+            --blue: #3b82f6; --gold: #facc15; --green: #22c55e; --red: #ef4444; 
+            --glass-bg: rgba(15, 23, 42, 0.95); 
+            --glass-border: 1px solid rgba(255, 255, 255, 0.12); 
+            --content-width: 94%; 
+        }
+        
+        body { 
+            background: url('/static/images/bg.jpg') center/cover no-repeat, linear-gradient(180deg, #0f172a 0%, #1e3a8a 100%);
+            color: #f1f5f9; 
+            font-family: 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, sans-serif; 
+            margin: 0; height: 100vh; display: flex; flex-direction: column; 
+            user-select: none; overflow: hidden; -webkit-tap-highlight-color: transparent; 
+        }
+
+        /* --- ШАПКА --- */
+        .header { 
+            padding: 15px; text-align: center; 
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%); 
+            position: relative; z-index: 50; 
+            min-height: 20px; 
+            flex-shrink: 0;
+        }
+
+        .top-controls { 
+            position: absolute; top: 15px; width: 100%; display: flex; justify-content: space-between; 
+            padding: 0 15px; box-sizing: border-box; pointer-events: none; z-index: 20; 
+        }
+        .lang-switch { display: flex; gap: 8px; pointer-events: auto; }
+        .flag-img { width: 28px; height: 21px; border-radius: 6px; cursor: pointer; opacity: 0.8; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); }
+        .flag-img.active { opacity: 1; transform: scale(1.1); border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.4); }
+        .sound-btn { background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; pointer-events: auto; backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+
+        .balance-container { margin-top: 50px; text-shadow: 0 4px 15px rgba(0,0,0,0.8); transition: opacity 0.3s; }
+        .balance { 
+            font-family: 'Arial Rounded MT Bold', 'Verdana', sans-serif; 
+            font-size: 3.2rem; font-weight: 900; color: var(--gold); line-height: 1;
+            -webkit-text-stroke: 1px rgba(0,0,0,0.3); text-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+        .balance-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px; opacity: 0.9; font-weight: 700; margin-bottom: 5px; color: #e2e8f0; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+
+        /* --- КОНТЕНТ --- */
+        .content { 
+            flex: 1; 
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
+            width: 100%; 
+            position: relative; 
+            overflow: hidden; 
+        }
+        .active-page { display: flex; } 
+        #page-game { justify-content: center; }
+
+        /* --- ИГРА --- */
+        .game-area { position: relative; display: flex; flex-direction: column; align-items: center; }
+        
+        .fish-btn { 
+            width: 240px; height: 240px; border-radius: 50%; 
+            background: url('/static/images/float.png') center/contain no-repeat;
+            filter: drop-shadow(0 20px 50px rgba(0,0,0,0.5));
+            cursor: pointer; transition: transform 0.1s; z-index: 10; position: relative;
+            display: flex; justify-content: center; align-items: flex-end; 
+        }
+        .fish-btn:active { transform: scale(0.94); }
+        .fish-btn::after {
+            content: ''; position: absolute; width: 180px; height: 180px; bottom: 15px; left: 50%; margin-left: -90px;
+            border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: ripple 2s infinite; z-index: -1; opacity: 0; pointer-events: none;
+        }
+        @keyframes ripple { 0% { transform: scale(0.8); opacity: 0.6; } 100% { transform: scale(1.6); opacity: 0; } }
+
+        .energy-wrapper { 
+            width: 220px; text-align: center; margin-top: 20px; 
+            background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 40px; 
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); 
+        }
+        .energy-box { width: 100%; height: 8px; background: rgba(255,255,255,0.15); border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
+        .energy-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); transition: width 0.3s; box-shadow: 0 0 10px rgba(59, 130, 246, 0.6); }
+        .energy-text { font-size: 0.75rem; color: #fff; font-weight: 700; letter-spacing: 0.5px; }
+
+        /* --- МАГАЗИН --- */
+        #page-shop { overflow-y: auto; padding-bottom: 20px; }
+        .card { 
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            width: var(--content-width); 
+            padding: 16px; margin: 6px 0; border-radius: 20px; display: flex; align-items: center; 
+            border: var(--glass-border); box-sizing: border-box;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .card:active { transform: scale(0.98); }
+        .card-icon { font-size: 2.2rem; margin-right: 15px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+        .card-info { flex: 1; }
+        .card-title { font-weight: 800; font-size: 1.1rem; color: #fff; }
+        .card-sub { font-size: 0.85rem; color: #94a3b8; margin-top: 3px; font-weight: 600; }
+        
+        .btn { background: var(--blue); color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); text-transform: uppercase; min-width: 75px; }
+        .btn:disabled { background: #334155; opacity: 0.6; box-shadow: none; color: #64748b; }
+        .btn-ad { background: var(--green); color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; animation: pulse 2s infinite; cursor: pointer; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4); text-transform: uppercase; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+
+        /* --- ЭФФЕКТЫ --- */
+        .float-text { position: absolute; font-weight: 900; font-size: 2rem; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 100; white-space: nowrap; text-shadow: 0 4px 10px rgba(0,0,0,0.8); -webkit-text-stroke: 1px rgba(0,0,0,0.2); }
+        @keyframes floatUp { 0% { opacity: 0; transform: translateY(20px) scale(0.5); } 20% { opacity: 1; transform: translateY(0) scale(1.2); } 100% { opacity: 0; transform: translateY(-100px) scale(1); } }
+
+        .catch-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(15, 23, 42, 0.98); border: 1px solid var(--gold);
+            padding: 30px; border-radius: 28px; text-align: center; z-index: 200;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none; opacity: 0; box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+            width: 75%;
+        }
+        .catch-popup.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        .catch-img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 15px; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.6)); }
+        .catch-title { font-size: 1.4rem; font-weight: 900; color: white; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .catch-reward { font-size: 1.6rem; font-weight: 800; color: var(--gold); }
+
+        /* --- НИЖНЕЕ МЕНЮ --- */
+        .nav { 
+            height: 85px; width: 100%; background: rgba(15, 23, 42, 0.98); 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            display: flex; justify-content: space-around; align-items: center; 
+            border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; z-index: 100; 
+            padding-bottom: 15px; padding-top: 12px; box-sizing: border-box; 
+        }
+        .nav-item { color: #64748b; font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; padding: 0; transition: 0.2s; width: 60px; font-weight: 700; justify-content: center; letter-spacing: 0.5px; }
+        .nav-item.active { color: var(--blue); transform: translateY(-3px); text-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+        .nav-icon { font-size: 1.6rem; margin-bottom: 4px; }
+        
+        /* --- ВЕРСТКА ДЛЯ СЕКЦИИ ТОП (Flex Scroll Fix) --- */
+        
+        #page-top {
+            height: 100%; 
+            padding-top: 20px; 
+            padding-bottom: 20px;
+            box-sizing: border-box;
+            display: none; 
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .leaderboard-panel {
+            width: 94%;
+            flex: 1; 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(15px);
+            border-radius: 24px;
+            border: var(--glass-border);
+            padding: 20px 15px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* Важно для работы flex-scroll */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); 
+        }
+
+        .top-header {
+            color: #fff; 
+            margin: 0 0 15px 0; 
+            text-transform: uppercase; letter-spacing: 2px; font-weight: 900; font-size: 1.1rem;
+            text-align: center;
+            text-shadow: 0 2px 10px rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+
+        .tabs-container { 
+            width: 100%; 
+            display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; 
+            flex-shrink: 0; 
+        }
+        
+        .tabs-row { 
+            display: flex; justify-content: space-between; 
+            background: rgba(0, 0, 0, 0.4); 
+            border-radius: 12px; padding: 4px; 
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .tab { 
+            flex: 1; text-align: center; padding: 8px 0; 
+            font-size: 0.8rem; border-radius: 10px; cursor: pointer; 
+            color: #94a3b8; font-weight: 700; transition: all 0.2s ease; 
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        
+        .tab.active { background: var(--blue); color: white; box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4); }
+        .tab:active { transform: scale(0.96); }
+
+        /* СКРОЛЛИТСЯ ТОЛЬКО ЭТОТ БЛОК */
+        .leaderboard-list { 
+            width: 100%; 
+            flex: 1; 
+            overflow-y: auto; 
+            scrollbar-width: none; 
+            display: flex; flex-direction: column; gap: 0; 
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .leaderboard-list::-webkit-scrollbar { display: none; }
+
+        .leader-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 14px 8px; 
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-weight: 600; font-size: 0.95rem; color: #f1f5f9; 
+            flex-shrink: 0;
+        }
+        .leader-row:last-child { border-bottom: none; }
+        
+        .leader-left { display: flex; align-items: center; gap: 12px; }
+        
+        .leader-rank { 
+            width: 26px; height: 26px; 
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.1); border-radius: 6px;
+            font-size: 0.8rem; color: #94a3b8; font-weight: 800;
+        }
+        .leader-val { color: var(--gold); text-align: right; font-weight: 800; font-family: 'Segoe UI', sans-serif; }
+        
+        .rank-1 .leader-rank { background: none; font-size: 1.5rem; text-shadow: 0 0 15px rgba(250, 204, 21, 0.5); }
+        .rank-1 { color: #facc15; text-shadow: 0 0 10px rgba(250, 204, 21, 0.2); }
+        .rank-2 .leader-rank { background: none; font-size: 1.5rem; text-shadow: 0 0 15px rgba(203, 213, 225, 0.5); }
+        .rank-2 { color: #e2e8f0; }
+        .rank-3 .leader-rank { background: none; font-size: 1.5rem; text-shadow: 0 0 15px rgba(251, 146, 60, 0.5); }
+        .rank-3 { color: #fdba74; }
+
+        .total-players {
+            margin-top: 15px;
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+    <audio id="bg-music" loop> <source src="/static/music.wav" type="audio/wav"> </audio>
+    <audio id="sfx-catch"> <source src="/static/catch.wav" type="audio/wav"> </audio>
+    <audio id="sfx-fail"> <source src="/static/fail.wav" type="audio/wav"> </audio>
+
+    <div class="header">
+        <div class="top-controls">
+            <div class="lang-switch">
+                <img src="https://flagcdn.com/32x24/us.png" class="flag-img" id="flag-en" onclick="setLanguage('en')">
+                <img src="https://flagcdn.com/32x24/ru.png" class="flag-img" id="flag-ru" onclick="setLanguage('ru')">
+                <img src="https://flagcdn.com/32x24/es.png" class="flag-img" id="flag-es" onclick="setLanguage('es')">
+                <img src="https://flagcdn.com/32x24/cn.png" class="flag-img" id="flag-zh" onclick="setLanguage('zh')">
+            </div>
+            <button class="sound-btn" onclick="toggleMute()" id="sound-btn">🎵</button>
+        </div>
+        <div class="balance-container" id="main-balance-display">
+            <div class="balance-label" data-t="score_label">BALANCE</div>
+            <div class="balance" id="balance">0</div>
+        </div>
+    </div>
+
+    <div id="catch-popup" class="catch-popup">
+        <img id="popup-img" class="catch-img" src="" alt="Catch">
+        <div id="popup-title" class="catch-title"></div>
+        <div id="popup-reward" class="catch-reward"></div>
+    </div>
+
+    <div id="page-game" class="content active-page">
+        <div class="game-area">
+            <div class="fish-btn" id="fish-btn" onclick="catchFish(event)"></div>
+            <div class="energy-wrapper">
+                <div class="energy-box"><div class="energy-fill" id="energy-fill"></div></div>
+                <div class="energy-text" id="energy-text">100% Energy</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-shop" class="content">
+        <h3 style="color:#cbd5e1; margin-top:25px; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px; font-size:0.9rem;" data-t="shop_title">Equipment Market</h3>
+        <div class="card" style="border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.1);">
+            <div class="card-icon">⚡</div>
+            <div class="card-info">
+                <div class="card-title" data-t="ad_title">Free Energy</div>
+                <div class="card-sub" data-t="ad_desc">+2000 Coins & Full Energy</div>
+            </div>
+            <button class="btn-ad" onclick="showAd()" data-t="ad_btn">WATCH</button>
+        </div>
+        <div class="card">
+            <div class="card-icon">🎣</div>
+            <div class="card-info">
+                <div class="card-title" data-t="item_rod">Rod</div>
+                <div class="card-sub" id="rod-desc">Lvl 1</div>
+            </div>
+            <button class="btn" id="btn-rod" onclick="buy('rod')">...</button>
+        </div>
+        <div class="card">
+            <div class="card-icon">🚤</div>
+            <div class="card-info">
+                <div class="card-title" data-t="item_boat">Boat (AFK)</div>
+                <div class="card-sub" id="boat-desc">None</div>
+            </div>
+            <button class="btn" id="btn-boat" onclick="buy('boat')">...</button>
+        </div>
+    </div>
+
+    <div id="page-top" class="content">
+        <div class="leaderboard-panel">
+            <div class="top-header" data-t="top_title">Hall of Fame</div>
+            
+            <div class="tabs-container">
+                <div class="tabs-row">
+                    <div class="tab active" onclick="switchTopType('balance', this)">
+                        <span class="tab-icon">💰</span> <span data-t="top_rich">Rich</span>
+                    </div>
+                    <div class="tab" onclick="switchTopType('weight', this)">
+                        <span class="tab-icon">⚖️</span> <span data-t="top_fish">Fisher</span>
+                    </div>
+                    <div class="tab" onclick="switchTopType('trash', this)">
+                        <span class="tab-icon">♻️</span> <span data-t="top_eco">Eco</span>
+                    </div>
+                </div>
+                
+                <div class="tabs-row">
+                    <div class="tab" onclick="switchTopPeriod('week', this)"><span data-t="period_week">Week</span></div>
+                    <div class="tab" onclick="switchTopPeriod('month', this)"><span data-t="period_month">Month</span></div>
+                    <div class="tab" onclick="switchTopPeriod('year', this)"><span data-t="period_year">Year</span></div>
+                    <div class="tab active" onclick="switchTopPeriod('all', this)"><span data-t="period_all">All</span></div>
+                </div>
+            </div>
+
+            <div id="leaderboard-list" class="leaderboard-list"></div>
+            
+            <div id="total-players-count" class="total-players"></div>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="nav-item active" onclick="tab('game', this)">
+            <img src="/static/images/icon_game.png" style="width:48px; height:48px; margin-bottom:4px; object-fit:contain;">
+            <span data-t="nav_game">Game</span>
+        </div>
+        <div class="nav-item" onclick="tab('shop', this)">
+            <img src="/static/images/icon_shop.png" style="width:48px; height:48px; margin-bottom:4px; object-fit:contain;">
+            <span data-t="nav_shop">Shop</span>
+        </div>
+        <div class="nav-item" onclick="tab('top', this)">
+            <img src="/static/images/icon_top.png" style="width:48px; height:48px; margin-bottom:4px; object-fit:contain;">
+            <span data-t="nav_top">Top</span>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const uid = tg.initDataUnsafe.user?.id || 0;
+        const uname = tg.initDataUnsafe.user?.username || "Fisher";
+        const fname = tg.initDataUnsafe.user?.first_name || "";
+        const lname = tg.initDataUnsafe.user?.last_name || "";
+        
+        let ADSGRAM_BLOCK_ID = null;
+
+        const translations = {
+            en: {
+                score_label: "BALANCE", shop_title: "Equipment Market", item_rod: "Spinning Rod", item_boat: "Trawler (AFK)",
+                top_title: "Hall of Fame", nav_game: "Game", nav_shop: "Shop", nav_top: "Top",
+                no_energy: "No energy 💤", miss: "Missed!", caught: "Caught:", lvl: "Lvl", chance: "Chance",
+                none: "None", buy_success: "Purchased!", afk_income: "AFK Income:", coins: "coins", loading: "Loading...",
+                ad_title: "Full Energy", ad_desc: "+2000 Coins & Full Energy", ad_btn: "WATCH",
+                energy_label: "Energy",
+                top_rich: "Rich", top_fish: "Fisher", top_eco: "Eco",
+                period_week: "Week", period_month: "Month", period_year: "Year", period_all: "All",
+                unit_kg: "kg", unit_pc: "pc.",
+                empty_list: "Empty list...", total_players: "Total players:"
+            },
+            ru: {
+                score_label: "БАЛАНС", shop_title: "Рынок Снастей", item_rod: "Спиннинг", item_boat: "Траулер (AFK)",
+                top_title: "Зал Славы", nav_game: "Игра", nav_shop: "Рынок", nav_top: "Топ",
+                no_energy: "Нет сил 💤", miss: "Сорвалась!", caught: "Пойман:", lvl: "Ур.", chance: "Шанс",
+                none: "Нет", buy_success: "Куплено!", afk_income: "AFK доход:", coins: "монет", loading: "Загрузка...",
+                ad_title: "Восстановить силы", ad_desc: "+2000 монет и полная энергия", ad_btn: "ВИДЕО",
+                energy_label: "Запас сил",
+                top_rich: "Богачи", top_fish: "Рыбаки", top_eco: "Экологи",
+                period_week: "Неделя", period_month: "Месяц", period_year: "Год", period_all: "Всё",
+                unit_kg: "кг", unit_pc: "шт.",
+                empty_list: "Список пуст...", total_players: "Всего игроков:"
+            },
+            es: {
+                score_label: "BALANCE", shop_title: "Tienda de Pesca", item_rod: "Caña de Pescar", item_boat: "Barco (AFK)",
+                top_title: "Salón de la Fama", nav_game: "Juego", nav_shop: "Tienda", nav_top: "Top",
+                no_energy: "Sin energía 💤", miss: "¡Fallaste!", caught: "Captura:", lvl: "Nvl", chance: "Prob.",
+                none: "Ninguno", buy_success: "¡Comprado!", afk_income: "Ingresos AFK:", coins: "monedas", loading: "Cargando...",
+                ad_title: "Energía completa", ad_desc: "+2000 monedas y 100% energía", ad_btn: "VER",
+                energy_label: "Energía",
+                top_rich: "Ricos", top_fish: "Pescador", top_eco: "Eco",
+                period_week: "Semana", period_month: "Mes", period_year: "Año", period_all: "Todo",
+                unit_kg: "kg", unit_pc: "pz.",
+                empty_list: "Lista vacía...", total_players: "Jugadores totales:"
+            },
+            zh: {
+                score_label: "余额", shop_title: "渔具商店", item_rod: "鱼竿", item_boat: "渔船 (挂机)",
+                top_title: "名人堂", nav_game: "捕鱼", nav_shop: "商店", nav_top: "排行",
+                no_energy: "没有能量 💤", miss: "跑了!", caught: "钓到了:", lvl: "等级", chance: "几率",
+                none: "无", buy_success: "购买成功!", afk_income: "离线收益:", coins: "金币", loading: "加载中...",
+                ad_title: "恢复能量", ad_desc: "+2000金币 & 100%能量", ad_btn: "观看",
+                energy_label: "能量",
+                top_rich: "富豪", top_fish: "渔夫", top_eco: "生态",
+                period_week: "周", period_month: "月", period_year: "年", period_all: "总榜",
+                unit_kg: "kg", unit_pc: "个",
+                empty_list: "列表为空...", total_players: "玩家总数:"
+            }
+        };
+
+        const fishNames = {
+            weed: { en: "Seaweed", ru: "Водоросли", es: "Algas", zh: "海藻" },
+            boot: { en: "Old Boot", ru: "Дырявый сапог", es: "Bota vieja", zh: "旧靴子" },
+            tin: { en: "Rusty Can", ru: "Ржавая банка", es: "Lata oxidada", zh: "生锈的罐头" },
+            bone: { en: "Fish Bone", ru: "Скелет рыбы", es: "Espina de pez", zh: "鱼骨" },
+            bag: { en: "Plastic Bag", ru: "Пакет", es: "Bolsa de plástico", zh: "塑料袋" },
+            tire: { en: "Old Tire", ru: "Старая шина", es: "Neumático viejo", zh: "旧轮胎" },
+            minnow: { en: "Minnow", ru: "Пескарь", es: "Pececillo", zh: "小鱼" },
+            shrimp: { en: "Shrimp", ru: "Креветка", es: "Camarón", zh: "虾" },
+            sardine: { en: "Sardine", ru: "Сардина", es: "Sardina", zh: "沙丁鱼" },
+            carp: { en: "Golden Carp", ru: "Карась", es: "Carpa dorada", zh: "金鲤鱼" },
+            perch: { en: "Perch", ru: "Окунь", es: "Perca", zh: "鲈鱼" },
+            trout: { en: "Trout", ru: "Форель", es: "Trucha", zh: "鳟鱼" },
+            clown: { en: "Clownfish", ru: "Рыба-клоун", es: "Pez payaso", zh: "小丑鱼" },
+            crab: { en: "King Crab", ru: "Краб", es: "Cangrejo real", zh: "帝王蟹" },
+            jelly: { en: "Jellyfish", ru: "Медуза", es: "Medusa", zh: "水母" },
+            squid: { en: "Squid", ru: "Кальмар", es: "Calamar", zh: "鱿鱼" },
+            seahorse: { en: "Seahorse", ru: "Морской конек", es: "Caballito de mar", zh: "海马" },
+            pike: { en: "Pike", ru: "Щука", es: "Lucio", zh: "狗鱼" },
+            eel: { en: "Electric Eel", ru: "Угорь", es: "Anguila eléctrica", zh: "电鳗" },
+            tuna: { en: "Bluefin Tuna", ru: "Тунец", es: "Atún rojo", zh: "蓝鳍金枪鱼" },
+            sword: { en: "Swordfish", ru: "Рыба-меч", es: "Pez espada", zh: "剑鱼" },
+            ray: { en: "Stingray", ru: "Скат", es: "Raya", zh: "鳐鱼" },
+            catfish: { en: "Giant Catfish", ru: "Сом", es: "Bagre gigante", zh: "巨型鲶鱼" },
+            angler: { en: "Anglerfish", ru: "Удильщик", es: "Rape", zh: "鮟鱇鱼" },
+            turtle: { en: "Sea Turtle", ru: "Черепаха", es: "Tortuga marina", zh: "海龟" },
+            shark: { en: "Great White", ru: "Белая Акула", es: "Gran tiburón blanco", zh: "大白鲨" },
+            whale: { en: "Blue Whale", ru: "Синий Кит", es: "Ballena azul", zh: "蓝鲸" },
+            chest: { en: "Treasure Chest", ru: "Сундук", es: "Cofre del tesoro", zh: "宝箱" },
+            mega: { en: "Megalodon", ru: "Мегалодон", es: "Megalodón", zh: "巨齿鲨" },
+            kraken: { en: "THE KRAKEN", ru: "КРАКЕН", es: "EL KRAKEN", zh: "海怪克拉肯" }
+        };
+
+        let currentLang = 'en'; 
+        let state = { bal: 0, en: 100, rod: 1, boat: 0, p_rod: 0, p_boat: 0 };
+        let isMuted = false; 
+        let musicStarted = false;
+        let isFishing = false;
+
+        let currentTopType = 'balance';
+        let currentTopPeriod = 'all';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('.flag-img').forEach(f => f.classList.remove('active'));
+            document.getElementById('flag-' + lang).classList.add('active');
+            document.querySelectorAll('[data-t]').forEach(el => {
+                const key = el.getAttribute('data-t');
+                if (translations[lang][key]) el.innerText = translations[lang][key];
+            });
+            render();
+            localStorage.setItem('fishing_lang', lang);
+            
+            // --- ЛОГИКА: ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ТОПА ---
+            // Если мы находимся на вкладке "Топ", перезагружаем данные,
+            // чтобы надписи "кг", "шт" и "Всего игроков" обновились на новый язык.
+            const pageTop = document.getElementById('page-top');
+            if(pageTop.style.display !== 'none' && pageTop.style.display !== '') {
+                loadTop();
+            }
+        }
+
+        const bgMusic = document.getElementById('bg-music');
+        const sfxCatch = document.getElementById('sfx-catch');
+        const sfxFail = document.getElementById('sfx-fail');
+        bgMusic.volume = 0.15; sfxCatch.volume = 1.0; sfxFail.volume = 1.0;
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('sound-btn').innerText = isMuted ? "🔇" : "🎵";
+            if (isMuted) bgMusic.pause();
+            else if (musicStarted) bgMusic.play();
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            if (!musicStarted && !isMuted) {
+                bgMusic.play().catch(e => console.log("Auto-play blocked"));
+                musicStarted = true;
+            }
+            const sound = (type === 'catch') ? sfxCatch : sfxFail;
+            sound.currentTime = 0;
+            sound.play();
+        }
+
+        function showAd() {
+            if (!ADSGRAM_BLOCK_ID) { tg.showAlert("Adsgram ID loading..."); return; }
+            if (!window.Adsgram) { tg.showAlert("Adsgram not loaded yet."); return; }
+            const AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+            AdController.show().then(async (result) => {
+                playSound('catch');
+                try {
+                    let res = await fetch('/api/ad_reward', { method: 'POST', body: JSON.stringify({telegram_id: uid}), headers: {'Content-Type': 'application/json'} });
+                    let data = await res.json();
+                    if(data.success) {
+                        tg.showAlert(`+${data.reward} Coins & Full Energy!`);
+                        updateState(data);
+                    }
+                } catch(e) { console.error(e); }
+            }).catch((result) => {});
+        }
+
+        async function init() {
+            const saved = localStorage.getItem('fishing_lang');
+            const tgLang = tg.initDataUnsafe.user?.language_code; 
+            if (saved) setLanguage(saved);
+            else if (translations[tgLang]) setLanguage(tgLang); 
+            else if (tgLang && tgLang.startsWith('zh')) setLanguage('zh'); 
+            else setLanguage('en');
+
+            try {
+                let res = await fetch('/api/init', { 
+                    method: 'POST', 
+                    body: JSON.stringify({
+                        telegram_id: uid, 
+                        username: uname,
+                        first_name: fname, 
+                        last_name: lname
+                    }), 
+                    headers: {'Content-Type': 'application/json'} 
+                });
+                let data = await res.json();
+                if (data.adsgram_id) ADSGRAM_BLOCK_ID = data.adsgram_id;
+                updateState(data);
+                if (data.offline_earned > 0) {
+                    const t = translations[currentLang];
+                    tg.showAlert(`${t.afk_income} ${data.offline_earned} ${t.coins}`);
+                }
+            } catch(e) { console.error(e); }                
+        }
+
+        async function catchFish(e) {
+            if (document.getElementById('catch-popup').classList.contains('show')) return;
+            if (isFishing) return; 
+
+            const t = translations[currentLang];
+            if (state.en < 1) { 
+                tg.HapticFeedback.notificationOccurred('warning');
+                showFloat(e.clientX, e.clientY, "💤", "#94a3b8");
+                return; 
+            }
+
+            isFishing = true; 
+            let cost = 1;
+            if (state.en <= 50) cost = 2;
+            if (state.en <= 20) cost = 4;
+            state.en = Math.max(0, state.en - cost); 
+            render();
+
+            const btn = document.getElementById('fish-btn');
+            btn.style.transform = "scale(0.9)";
+            setTimeout(() => btn.style.transform = "scale(1)", 100);
+
+            try {
+                let res = await fetch('/api/fish', { 
+                    method: 'POST', body: JSON.stringify({telegram_id: uid}),
+                    headers: {'Content-Type': 'application/json'}
+                });
+                let data = await res.json();
+                state.bal = data.balance;
+                state.en = data.energy; 
+
+                if (data.afk_earned && data.afk_earned > 0) showFloat(e.clientX + 50, e.clientY - 50, `+${data.afk_earned} 🚤`, "#60a5fa");
+
+                if (data.status === "caught") {
+                    playSound('catch');
+                    tg.HapticFeedback.impactOccurred('medium');
+                    
+                    let fName = data.fish_id;
+                    if (fishNames[data.fish_id] && fishNames[data.fish_id][currentLang]) {
+                        fName = fishNames[data.fish_id][currentLang];
+                    } else if (fishNames[data.fish_id]) fName = fishNames[data.fish_id]['en'];
+
+                    const popup = document.getElementById('catch-popup');
+                    const pImg = document.getElementById('popup-img');
+                    const pTitle = document.getElementById('popup-title');
+                    const pReward = document.getElementById('popup-reward');
+
+                    pImg.src = `/static/images/${data.fish_id}.png`; 
+                    pTitle.innerText = fName;
+
+                    let weightText = "";
+                    if (data.is_trash) {
+                        weightText = `1 ${translations[currentLang].unit_pc}`;
+                    } else {
+                        weightText = `${data.weight} ${translations[currentLang].unit_kg}`;
+                    }
+                    
+                    pReward.innerHTML = `<span style="color:var(--gold)">+${data.reward} 💰</span><br><span style="font-size:1.2rem; color:#cbd5e1">${weightText}</span>`;
+                    
+                    popup.classList.add('show');
+                    setTimeout(() => popup.classList.remove('show'), 1500);
+
+                    showFloat(e.clientX, e.clientY, `+${data.reward}`, data.fish_color);
+                    
+                    const balEl = document.getElementById('balance');
+                    balEl.style.transform = "scale(1.15)";
+                    setTimeout(() => balEl.style.transform = "scale(1)", 150);
+
+                } else if (data.status === "miss") {
+                    playSound('fail');
+                    tg.HapticFeedback.notificationOccurred('error');
+                    showFloat(e.clientX, e.clientY, t.miss, "#ef4444");
+                } else {
+                    showFloat(e.clientX, e.clientY, "💤", "#94a3b8");
+                }
+            } catch (err) { 
+                console.error(err); 
+                state.en = Math.min(100, state.en + cost); 
+            } finally {
+                isFishing = false;
+                render();
+            }
+        }
+
+        async function buy(item) {
+            let price = (item === 'rod') ? state.p_rod : state.p_boat;
+            if (state.bal < price) { tg.HapticFeedback.notificationOccurred('error'); return; }
+
+            let res = await fetch('/api/upgrade', { method: 'POST', body: JSON.stringify({telegram_id: uid, item_id: item}), headers: {'Content-Type': 'application/json'} });
+            let data = await res.json();
+            if (data.success) {
+                playSound('catch');
+                tg.HapticFeedback.notificationOccurred('success');
+                tg.showAlert(translations[currentLang].buy_success);
+                updateState(data);
+            }
+        }
+
+        async function switchTopType(type, el) {
+            currentTopType = type;
+            el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            await loadTop();
+            tg.HapticFeedback.selectionChanged();
+        }
+
+        async function switchTopPeriod(period, el) {
+            currentTopPeriod = period;
+            el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            await loadTop();
+            tg.HapticFeedback.selectionChanged();
+        }
+
+        async function loadTop() {
+            let list = document.getElementById('leaderboard-list');
+            list.innerHTML = `<div style='color:#cbd5e1; margin-top:30px; text-align:center; font-weight:600;'>${translations[currentLang].loading}</div>`;
+            try {
+                let res = await fetch(`/api/leaderboard?type=${currentTopType}&period=${currentTopPeriod}`);
+                let data = await res.json();
+                list.innerHTML = "";
+                
+                if (data.leaderboard.length === 0) {
+                    list.innerHTML = `<div style='color:#64748b; margin-top:30px; text-align:center; font-weight:600;'>${translations[currentLang].empty_list}</div>`;
+                } else {
+                    data.leaderboard.forEach((u, i) => {
+                        let rankClass = "";
+                        let rankIcon = i + 1;
+
+                        if (i === 0) { rankClass = "rank-1"; rankIcon = "🥇"; }
+                        if (i === 1) { rankClass = "rank-2"; rankIcon = "🥈"; }
+                        if (i === 2) { rankClass = "rank-3"; rankIcon = "🥉"; }
+
+                        let valText = "";
+                        if (currentTopType === 'balance') {
+                            valText = u.value.toLocaleString() + " 💰";
+                        } else if (currentTopType === 'weight') {
+                            valText = parseFloat(u.value).toFixed(1) + " " + translations[currentLang].unit_kg;
+                        } else if (currentTopType === 'trash') {
+                            valText = Math.floor(u.value) + " " + translations[currentLang].unit_pc;
+                        }
+
+                        list.innerHTML += `
+                        <div class="leader-row ${rankClass}">
+                            <div class="leader-left">
+                                <div class="leader-rank">${rankIcon}</div>
+                                <div style="color:white; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px;">${u.username}</div>
+                            </div>
+                            <div class="leader-val">${valText}</div>
+                        </div>`;
+                    });
+                }
+
+                const totalCountEl = document.getElementById('total-players-count');
+                if (totalCountEl && data.total !== undefined) {
+                    totalCountEl.innerText = `${translations[currentLang].total_players} ${data.total}`;
+                }
+
+            } catch(e) {
+                console.error(e);
+                list.innerHTML = `<div style='color:#ef4444; margin-top:30px; text-align:center;'>Error loading top</div>`;
+            }
+        }
+
+        function updateState(data) {
+            state.bal = data.balance;
+            state.en = data.energy;
+            state.rod = data.rod_level;
+            state.boat = data.boat_level;
+            state.p_rod = data.rod_price;
+            state.p_boat = data.boat_price;
+            render();
+        }
+
+        function render() {
+            const t = translations[currentLang];
+            document.getElementById('balance').innerText = state.bal.toLocaleString();
+            const enFill = document.getElementById('energy-fill');
+            let c1 = '#3b82f6', c2 = '#60a5fa'; 
+            if (state.en <= 50) { c1 = '#ca8a04'; c2 = '#facc15'; } 
+            if (state.en <= 20) { c1 = '#dc2626'; c2 = '#ef4444'; } 
+            enFill.style.width = state.en + "%";
+            enFill.style.background = `linear-gradient(90deg, ${c1}, ${c2})`;
+            if (state.en <= 20) enFill.style.boxShadow = "0 0 15px rgba(239, 68, 68, 0.8)";
+            else enFill.style.boxShadow = "0 0 10px rgba(59, 130, 246, 0.5)";
+            document.getElementById('energy-text').innerText = Math.floor(state.en) + "% " + t.energy_label;
+            
+            const btnRod = document.getElementById('btn-rod');
+            const chance = 15 + (state.rod * 3);
+            document.getElementById('rod-desc').innerText = `${t.lvl} ${state.rod} (${t.chance} ${chance}%)`;
+            if(state.p_rod) { btnRod.innerText = `${state.p_rod.toLocaleString()} 💰`; btnRod.disabled = state.bal < state.p_rod; } else { btnRod.innerText = "MAX"; btnRod.disabled = true; }
+
+            const btnBoat = document.getElementById('btn-boat');
+            document.getElementById('boat-desc').innerText = state.boat ? `${t.lvl} ${state.boat}` : t.none;
+            if(state.p_boat) { btnBoat.innerText = `${state.p_boat.toLocaleString()} 💰`; btnBoat.disabled = state.bal < state.p_boat; } else { btnBoat.innerText = "MAX"; btnBoat.disabled = true; }
+        }
+
+        function tab(name, el) {
+            document.querySelectorAll('.content').forEach(d => d.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active'));
+            document.getElementById('page-'+name).style.display = (name === 'top') ? 'flex' : 'flex';
+            el.classList.add('active');
+            
+            const balContainer = document.getElementById('main-balance-display');
+            if (name === 'top') {
+                balContainer.style.display = 'none';
+            } else {
+                balContainer.style.display = 'block';
+            }
+
+            if(name === 'top') loadTop();
+            tg.HapticFeedback.selectionChanged();
+        }
+
+        function showFloat(x, y, txt, color) {
+            let el = document.createElement('div');
+            el.className = 'float-text';
+            el.style.left = x + "px"; el.style.top = y + "px";
+            el.innerText = txt;
+            el.style.color = color;
+            document.body.appendChild(el);
+            setTimeout(()=>el.remove(), 900);
+        }
+
+        setInterval(async () => {
+            if (isFishing) return;
+            if (document.getElementById('catch-popup').classList.contains('show')) return;
+            try {
+                let res = await fetch('/api/init', { 
+                    method: 'POST', body: JSON.stringify({telegram_id: uid}), headers: {'Content-Type': 'application/json'}
+                });
+                let data = await res.json();
+                updateState(data);
+            } catch (e) { console.error("Sync error", e); }
+        }, 4000); 
+
+        init();
+    </script>
+</body>
+</html>
