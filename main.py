@@ -14,6 +14,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, BigInteger, Integer, String, Float, Boolean, DateTime, desc, select, func
 from pydantic import BaseModel
 
+# --- КОНФИГУРАЦИЯ ---
 def load_config():
     try:
         with open("config.yaml", "r") as f:
@@ -30,6 +31,7 @@ ADSGRAM_ID = config.get('adsgram', {}).get('block_id', "")
 
 Base = declarative_base()
 
+# --- МОДЕЛИ ДАННЫХ ---
 class User(Base):
     __tablename__ = "users"
     telegram_id = Column(BigInteger, primary_key=True, index=True)
@@ -44,17 +46,19 @@ class User(Base):
     boat_level = Column(Integer, default=0)
     
     # Инвентарь (Consumables)
-    bait_common = Column(Integer, default=0) # Обычная наживка (черви)
-    bait_rare = Column(Integer, default=0)   # Редкая наживка (живец)
+    bait_common = Column(Integer, default=0) # Обычная наживка
+    bait_rare = Column(Integer, default=0)   # Редкая наживка
     
     last_active_at = Column(Integer, default=lambda: int(time.time()))
+    # Анти-чит: время последнего клика
+    last_click_at = Column(Float, default=0.0) 
 
 class Catch(Base):
     __tablename__ = "catches"
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(BigInteger, index=True) 
-    fish_id = Column(String)                 
-    weight = Column(Float, default=0.0)      
+    fish_id = Column(String)                  
+    weight = Column(Float, default=0.0)       
     is_trash = Column(Boolean, default=False)
     reward = Column(Integer, default=0)
     caught_at = Column(DateTime, default=datetime.utcnow)
@@ -62,23 +66,53 @@ class Catch(Base):
 engine = create_async_engine(DATABASE_URL, echo=False)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-# --- ЦЕНЫ И КОНФИГ МАГАЗИНА ---
-ROD_PRICES = {1: 0, 2: 500, 3: 1500, 4: 5000, 5: 15000, 6: 50000, 7: 150000, 8: 500000, 9: 1000000, 10: 5000000}
-BOAT_PRICES = {1: 2000, 2: 10000, 3: 50000, 4: 200000, 5: 1000000}
-BOAT_INCOME = {0: 0, 1: 2, 2: 10, 3: 50, 4: 200, 5: 1000}
+# --- БАЛАНС И КОНСТАНТЫ ---
 
-# Расходники (цена за 1 шт или за пачку)
-CONSUMABLES = {
-    "energy_drink": {"price": 500, "energy": 50},  # Энергетик +50%
-    "bait_common": {"price": 100, "amount": 10},   # Черви (10 шт)
-    "bait_rare": {"price": 1000, "amount": 5}      # Живец (5 шт)
+# Цены на удочки (Сглаженная прогрессия)
+ROD_PRICES = {
+    1: 0, 2: 300, 3: 1000, 4: 3500, 5: 12000, 
+    6: 40000, 7: 120000, 8: 400000, 9: 1000000, 10: 3000000
 }
 
-ENERGY_REGEN_PER_SEC = 0.5 
-MAX_ENERGY = 100
+# Цены на лодки
+BOAT_PRICES = {1: 1500, 2: 8000, 3: 35000, 4: 150000, 5: 800000}
 
-# Таблица рыб (оставляем ту же, но она пригодится для логики наживки)
+# БАЛАНС ЛОДОК (HARD NERF)
+# Доход в секунду (сильно уменьшен, чтобы не убивать активную игру)
+BOAT_INCOME = {
+    0: 0, 
+    1: 0.1,   # ~360 монет/час
+    2: 0.5,   # ~1800 монет/час
+    3: 2.5,   # ~9000 монет/час
+    4: 10.0,  # ~36k монет/час
+    5: 40.0   # ~144k монет/час
+}
+
+# ВМЕСТИМОСТЬ ТРЮМА (В часах)
+# Лодка перестает приносить доход, если игрок не заходил дольше этого времени
+BOAT_MAX_HOURS = {
+    0: 0, 
+    1: 2,   # Нужно заходить каждые 2 часа
+    2: 4,   
+    3: 8,   # Ночной режим
+    4: 12,  
+    5: 24   # Сутки
+}
+
+# Расходники
+CONSUMABLES = {
+    "energy_drink": {"price": 400, "energy": 50},  
+    "bait_common": {"price": 100, "amount": 10},   # 10 монет/шт
+    "bait_rare": {"price": 800, "amount": 5}       # 160 монет/шт
+}
+
+ENERGY_REGEN_PER_SEC = 0.6  # Полное восстановление ~2.7 минуты
+MAX_ENERGY = 100
+CLICK_COOLDOWN = 0.5        # Задержка между кликами (анти-кликер)
+
+# Таблица рыб
 FISH_TABLE = [
+    # Мусор (trash) - теперь дает небольшую награду
     {"id": "weed", "emoji": "🌿", "mult": 0.0, "weight": 20, "color": "#64748b", "is_trash": True, "min_w": 0, "max_w": 0, "rarity": 0},
     {"id": "boot", "emoji": "👢", "mult": 0.0, "weight": 10, "color": "#64748b", "is_trash": True, "min_w": 0, "max_w": 0, "rarity": 0},
     {"id": "tin", "emoji": "🥫", "mult": 0.0, "weight": 10, "color": "#64748b", "is_trash": True, "min_w": 0, "max_w": 0, "rarity": 0},
@@ -128,15 +162,26 @@ class BuyRequest(BaseModel):
 class AdRewardRequest(BaseModel):
     telegram_id: int
 
+# --- ЛОГИКА ОФФЛАЙН ПРОГРЕССА С ЛИМИТАМИ ---
 def calculate_offline_progress(user, current_time, is_active=False):
     time_diff = current_time - user.last_active_at
     if time_diff < 0: time_diff = 0
+    
+    # 1. Лимит по времени работы лодки (вместимость трюма)
+    max_hours = BOAT_MAX_HOURS.get(user.boat_level, 0)
+    max_seconds = max_hours * 3600
+    effective_time = min(time_diff, max_seconds)
+    
+    # 2. Начисление денег за эффективное время
     income = BOAT_INCOME.get(user.boat_level, 0)
-    earned = int(time_diff * income)
+    earned = int(effective_time * income)
     user.balance += earned
+    
+    # 3. Восстановление энергии (за ВСЁ время отсутствия, тут лимит лодки не влияет)
     if not is_active or time_diff > 5:
         restored_energy = time_diff * ENERGY_REGEN_PER_SEC
         user.energy = min(MAX_ENERGY, user.energy + restored_energy)
+    
     user.last_active_at = current_time
     return earned
 
@@ -153,13 +198,17 @@ async def init_user(data: InitRequest):
         result = await session.execute(select(User).where(User.telegram_id == data.telegram_id))
         user = result.scalars().first()
         earned = 0
+        
         if not user:
+            # SOFT LAUNCH: Даем ресурсы новичку
             user = User(
                 telegram_id=data.telegram_id, 
                 username=data.username,
                 first_name=data.first_name, 
                 last_name=data.last_name,   
-                last_active_at=current_time
+                last_active_at=current_time,
+                balance=200,    # Стартовый бонус
+                bait_common=5   # 5 бесплатных червей
             )
             session.add(user)
         else:
@@ -169,6 +218,7 @@ async def init_user(data: InitRequest):
             earned = calculate_offline_progress(user, current_time)
         
         await session.commit()
+        
         return {
             "balance": user.balance, 
             "energy": int(user.energy),
@@ -184,39 +234,47 @@ async def init_user(data: InitRequest):
 
 @app.post("/api/fish")
 async def fish_action(data: ClickRequest):
-    current_time = int(time.time())
+    current_time = time.time()
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(User).where(User.telegram_id == data.telegram_id))
         user = result.scalars().first()
-        afk_earned = calculate_offline_progress(user, current_time, is_active=True)
         
-        if int(user.energy) < 1:
+        # Считаем пассивный доход перед действием
+        afk_earned = calculate_offline_progress(user, int(current_time), is_active=True)
+        
+        # --- ANTI-CLICKER ---
+        if current_time - user.last_click_at < CLICK_COOLDOWN:
+             return {"status": "cooldown", "balance": user.balance, "energy": int(user.energy), "afk_earned": afk_earned}
+        user.last_click_at = current_time
+
+        # Фиксированная цена клика (убрали наказание за усталость)
+        energy_cost = 2.0 
+        
+        if user.energy < energy_cost:
             await session.commit()
             return {"status": "no_energy", "balance": user.balance, "energy": int(user.energy), "afk_earned": afk_earned}
 
         # --- ЛОГИКА НАЖИВКИ ---
-        # Если есть наживка, она тратится, но повышает удачу
         used_bait = None
         luck_boost = 0.0
         
         if user.bait_rare > 0:
             user.bait_rare -= 1
             used_bait = "rare"
-            luck_boost = 0.3 # +30% к шансу
+            luck_boost = 0.35 # +35% шанса
         elif user.bait_common > 0:
             user.bait_common -= 1
             used_bait = "common"
-            luck_boost = 0.1 # +10% к шансу
+            luck_boost = 0.15 # +15% шанса
 
-        # Шанс поймать рыбу
-        catch_chance = 0.15 + (user.rod_level * 0.03) + luck_boost
-        catch_chance = min(catch_chance, 0.85)
+        # --- БАЛАНС: ШАНСЫ ---
+        # База 30% + бонус за уровень удочки (макс 95%)
+        catch_chance = 0.30 + (user.rod_level * 0.04) + luck_boost
+        catch_chance = min(catch_chance, 0.95)
         
-        energy_cost = 1
-        if int(user.energy) < 70: energy_cost = 2
-        if int(user.energy) < 30: energy_cost = 4
         user.energy = max(0.0, user.energy - energy_cost)
         
+        # Промах
         if random.random() > catch_chance:
             await session.commit()
             return {
@@ -228,27 +286,33 @@ async def fish_action(data: ClickRequest):
                 "bait_rare": user.bait_rare
             }
 
-        # Веса для выбора рыбы (чем выше rarity, тем реже)
-        # Если использована крутая наживка, фильтруем мусор или повышаем веса редких
+        # ВЫБОР РЫБЫ
         weights = [f['weight'] for f in FISH_TABLE]
         
-        # Если редкая наживка - убираем мусор из выборки (вес 0)
+        # Если редкая наживка: убираем мусор, НО оставляем Сундук (Chest)
         if used_bait == "rare":
-            weights = [w if not f['is_trash'] else 0 for f, w in zip(FISH_TABLE, weights)]
+            weights = [w if (not f['is_trash'] or f['id'] == 'chest') else 0 for f, w in zip(FISH_TABLE, weights)]
         
-        # Выбираем рыбу
         try:
             fish = random.choices(FISH_TABLE, weights=weights, k=1)[0]
-        except ValueError: # Если веса все 0 (вдруг)
+        except ValueError:
              fish = FISH_TABLE[0]
 
         weight = 0.0
         if not fish['is_trash']:
             weight = round(random.uniform(fish['min_w'], fish['max_w']), 2)
         
-        base_power = 10 * user.rod_level
-        reward = int(base_power * fish['mult'])
-        if fish['id'] == 'boot': reward = 0
+        # --- БАЛАНС: НАГРАДА ---
+        # Нелинейный рост силы удочки (x^1.15), чтобы поспевать за ценами
+        rod_multiplier = user.rod_level ** 1.15
+        base_power = 15 * rod_multiplier
+        
+        reward = 0
+        if fish['is_trash'] and fish['id'] != 'chest':
+            # "Эко-сбор": символическая плата за мусор
+            reward = int(5 * rod_multiplier)
+        else:
+            reward = int(base_power * fish['mult'])
 
         user.balance += reward
         
@@ -279,17 +343,17 @@ async def buy_upgrade(data: BuyRequest):
         user = result.scalars().first()
         success = False
         
-        # --- ПОКУПКА СНАСТЕЙ (Equipment) ---
+        # --- ОБРАБОТКА ПОКУПОК ---
         if data.item_id == "rod":
             price = ROD_PRICES.get(user.rod_level + 1)
             if price and user.balance >= price:
                 user.balance -= price; user.rod_level += 1; success = True
+                
         elif data.item_id == "boat":
             price = BOAT_PRICES.get(user.boat_level + 1)
             if price and user.balance >= price:
                 user.balance -= price; user.boat_level += 1; success = True
         
-        # --- ПОКУПКА РАСХОДНИКОВ (Consumables) ---
         elif data.item_id in CONSUMABLES:
             item = CONSUMABLES[data.item_id]
             if user.balance >= item['price']:
@@ -323,10 +387,17 @@ async def ad_reward(data: AdRewardRequest):
         result = await session.execute(select(User).where(User.telegram_id == data.telegram_id))
         user = result.scalars().first()
         if not user: return {"success": False}
-        user.balance += 2000
+        
+        # ДИНАМИЧЕСКАЯ НАГРАДА
+        # 500 база + (уровень * 250). На 10 уровне ~3000 монет.
+        base_reward = 500
+        scaling = user.rod_level * 250
+        total_reward = base_reward + scaling
+        
+        user.balance += total_reward
         user.energy = 100
         await session.commit()
-        return {"success": True, "balance": user.balance, "energy": int(user.energy), "reward": 2000}
+        return {"success": True, "balance": user.balance, "energy": int(user.energy), "reward": total_reward}
 
 @app.get("/api/leaderboard")
 async def get_leaderboard(type: str = "balance", period: str = "all"):

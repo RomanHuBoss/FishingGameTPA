@@ -53,23 +53,21 @@
         .content { 
             flex: 1; display: none; flex-direction: column; align-items: center; 
             width: 100%; position: relative; overflow: hidden; 
-            /* Добавлено: отступ снизу, чтобы контент не улетал под меню */
             padding-bottom: 90px; 
             box-sizing: border-box;
         }
         .active-page { display: flex; } 
         #page-game { justify-content: center; }
 
-        /* --- ИГРА (Исправлены размеры) --- */
+        /* --- ИГРА --- */
         .game-area { 
             position: relative; display: flex; flex-direction: column; align-items: center; 
             width: 100%; justify-content: center; flex: 1;
         }
         
         .fish-btn { 
-            /* ИСПРАВЛЕНО: Уменьшен размер (было 320px) и добавлена адаптивность */
             width: 220px; height: 220px; 
-            max-width: 35vh; max-height: 35vh; /* Чтобы не занимал весь экран */
+            max-width: 35vh; max-height: 35vh;
             border-radius: 50%; 
             background: url('/static/images/float.png') center/contain no-repeat;
             filter: drop-shadow(0 20px 50px rgba(0,0,0,0.5));
@@ -79,7 +77,6 @@
         }
         .fish-btn:active { transform: scale(0.94); }
         .fish-btn::after {
-            /* ИСПРАВЛЕНО: Уменьшена анимация под новый размер */
             content: ''; position: absolute; width: 180px; height: 180px; bottom: 10px; left: 50%; margin-left: -90px;
             border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.3);
             animation: ripple 2s infinite; z-index: -1; opacity: 0; pointer-events: none;
@@ -90,16 +87,15 @@
             width: 220px; text-align: center; margin-top: 15px; 
             background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 40px; 
             backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); 
-            flex-shrink: 0; /* Не сжимать */
+            flex-shrink: 0; 
         }
         .energy-box { width: 100%; height: 8px; background: rgba(255,255,255,0.15); border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
         .energy-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); transition: width 0.3s; box-shadow: 0 0 10px rgba(59, 130, 246, 0.6); }
         .energy-text { font-size: 0.75rem; color: #fff; font-weight: 700; letter-spacing: 0.5px; }
 
-        /* --- МАГАЗИН (Исправлен отступ) --- */
+        /* --- МАГАЗИН --- */
         #page-shop { 
             height: 100%; 
-            /* ИСПРАВЛЕНО: Было 80px, стало 20px по просьбе */
             padding-top: 20px; 
             justify-content: flex-start;
         }
@@ -140,13 +136,11 @@
             width: 100%; 
             flex: 1; 
             overflow-y: auto; 
-            /* ИСПРАВЛЕНО: Удален scrollbar-width: none */
             display: flex; flex-direction: column; gap: 8px; 
-            padding-right: 2px; /* Место для скролла */
+            padding-right: 2px;
             -webkit-overflow-scrolling: touch;
         }
         
-        /* ИСПРАВЛЕНО: Добавлены стили для аккуратного скролла */
         .shop-list::-webkit-scrollbar { width: 5px; display: block; }
         .shop-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 3px; }
         .shop-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
@@ -221,16 +215,14 @@
             display: flex; justify-content: space-around; align-items: center; 
             border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; z-index: 100; 
             padding-bottom: 15px; padding-top: 12px; box-sizing: border-box; 
-            position: fixed; bottom: 0; left: 0; /* Фиксируем меню */
+            position: fixed; bottom: 0; left: 0; 
         }
         .nav-item { color: #64748b; font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; padding: 0; transition: 0.2s; width: 60px; font-weight: 700; justify-content: center; letter-spacing: 0.5px; }
         .nav-item.active { color: var(--blue); transform: translateY(-3px); text-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
-        .nav-icon { font-size: 1.6rem; margin-bottom: 4px; }
         
-        /* --- ТОП (Исправлен отступ) --- */
+        /* --- ТОП --- */
         #page-top { 
             height: 100%; 
-            /* ИСПРАВЛЕНО: Было 80px, стало 20px */
             padding-top: 20px; 
             box-sizing: border-box; display: none; flex-direction: column; align-items: center; justify-content: flex-start; 
         }
@@ -242,12 +234,10 @@
         
         .leaderboard-list { 
             width: 100%; flex: 1; overflow-y: auto; 
-            /* ИСПРАВЛЕНО: Удален scrollbar-width: none */
             display: flex; flex-direction: column; gap: 0; 
             border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); 
             -webkit-overflow-scrolling: touch;
         }
-        /* ИСПРАВЛЕНО: Добавлены стили скролла */
         .leaderboard-list::-webkit-scrollbar { width: 5px; display: block; }
         .leaderboard-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 3px; }
         .leaderboard-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
@@ -384,13 +374,21 @@
         
         let ADSGRAM_BLOCK_ID = null;
 
+        // --- КОНФИГУРАЦИЯ ЦЕН РАСХОДНИКОВ ---
+        // Эти данные дублируют логику сервера для мгновенного отображения в UI
+        const CONSUMABLES_INFO = {
+            'energy_drink': {price: 400, name_key: 'item_energy_drink', desc_key: 'desc_energy', icon: '🥤'},
+            'bait_common': {price: 100, name_key: 'item_bait_common', desc_key: 'desc_bait_common', icon: '🪱'},
+            'bait_rare': {price: 800, name_key: 'item_bait_rare', desc_key: 'desc_bait_rare', icon: '🐟'}
+        };
+
         const translations = {
             en: {
                 score_label: "BALANCE", shop_title: "Fishing Market", item_rod: "Spinning Rod", item_boat: "Trawler (AFK)",
                 top_title: "Hall of Fame", nav_game: "Game", nav_shop: "Shop", nav_top: "Top",
                 no_energy: "No energy 💤", miss: "Missed!", caught: "Caught:", lvl: "Lvl", chance: "Chance",
                 none: "None", buy_success: "Purchased!", afk_income: "AFK Income:", coins: "coins", loading: "Loading...",
-                ad_title: "Free Energy", ad_desc: "+2000 Coins & Full Energy", ad_btn: "WATCH",
+                ad_title: "Free Energy", ad_desc: "Bonus Coins & Full Energy", ad_btn: "WATCH",
                 energy_label: "Energy",
                 top_rich: "Rich", top_fish: "Fisher", top_eco: "Eco",
                 period_week: "Week", period_month: "Month", period_year: "Year", period_all: "All",
@@ -398,15 +396,15 @@
                 empty_list: "Empty list...", total_players: "Total players:",
                 shop_equip: "Equipment", shop_consum: "Consumables",
                 item_energy_drink: "Energy Drink", desc_energy: "Restore 50% Energy",
-                item_bait_common: "Worms (10x)", desc_bait_common: "+10% Chance",
-                item_bait_rare: "Live Bait (5x)", desc_bait_rare: "+30% Chance & No Trash"
+                item_bait_common: "Worms (10x)", desc_bait_common: "+15% Chance",
+                item_bait_rare: "Live Bait (5x)", desc_bait_rare: "+35% Chance & Rarer Fish"
             },
             ru: {
                 score_label: "БАЛАНС", shop_title: "Рыболовный Рынок", item_rod: "Спиннинг", item_boat: "Траулер (AFK)",
                 top_title: "Зал Славы", nav_game: "Игра", nav_shop: "Рынок", nav_top: "Топ",
                 no_energy: "Нет сил 💤", miss: "Сорвалась!", caught: "Пойман:", lvl: "Ур.", chance: "Шанс",
                 none: "Нет", buy_success: "Куплено!", afk_income: "AFK доход:", coins: "монет", loading: "Загрузка...",
-                ad_title: "Бесплатная Энергия", ad_desc: "+2000 монет и полная энергия", ad_btn: "ВИДЕО",
+                ad_title: "Бесплатная Энергия", ad_desc: "Монеты (от уровня) и энергия", ad_btn: "ВИДЕО",
                 energy_label: "Запас сил",
                 top_rich: "Богачи", top_fish: "Рыбаки", top_eco: "Экологи",
                 period_week: "Неделя", period_month: "Месяц", period_year: "Год", period_all: "Всё",
@@ -414,15 +412,15 @@
                 empty_list: "Список пуст...", total_players: "Всего игроков:",
                 shop_equip: "Снасти", shop_consum: "Припасы",
                 item_energy_drink: "Энергетик", desc_energy: "Восст. 50% сил",
-                item_bait_common: "Черви (10шт)", desc_bait_common: "+10% к шансу",
-                item_bait_rare: "Живец (5шт)", desc_bait_rare: "+30% шанс, без мусора"
+                item_bait_common: "Черви (10шт)", desc_bait_common: "+15% к шансу",
+                item_bait_rare: "Живец (5шт)", desc_bait_rare: "+35% шанс, лучше улов"
             },
             es: {
                 score_label: "BALANCE", shop_title: "Mercado de Pesca", item_rod: "Caña de Pescar", item_boat: "Barco (AFK)",
                 top_title: "Salón de la Fama", nav_game: "Juego", nav_shop: "Tienda", nav_top: "Top",
                 no_energy: "Sin energía 💤", miss: "¡Fallaste!", caught: "Captura:", lvl: "Nvl", chance: "Prob.",
                 none: "Ninguno", buy_success: "¡Comprado!", afk_income: "Ingresos AFK:", coins: "monedas", loading: "Cargando...",
-                ad_title: "Energía Gratis", ad_desc: "+2000 monedas y 100% energía", ad_btn: "VER",
+                ad_title: "Energía Gratis", ad_desc: "Monedas extra y energía", ad_btn: "VER",
                 energy_label: "Energía",
                 top_rich: "Ricos", top_fish: "Pescador", top_eco: "Eco",
                 period_week: "Semana", period_month: "Mes", period_year: "Año", period_all: "Todo",
@@ -430,15 +428,15 @@
                 empty_list: "Lista vacía...", total_players: "Jugadores totales:",
                 shop_equip: "Equipo", shop_consum: "Consumibles",
                 item_energy_drink: "Bebida Energética", desc_energy: "Restaura 50% Energía",
-                item_bait_common: "Gusanos (10x)", desc_bait_common: "+10% Probabilidad",
-                item_bait_rare: "Cebo Vivo (5x)", desc_bait_rare: "+30% Prob. & Sin Basura"
+                item_bait_common: "Gusanos (10x)", desc_bait_common: "+15% Probabilidad",
+                item_bait_rare: "Cebo Vivo (5x)", desc_bait_rare: "+35% Prob. & Mejor Pesca"
             },
             zh: {
                 score_label: "余额", shop_title: "渔具商店", item_rod: "鱼竿", item_boat: "渔船 (挂机)",
                 top_title: "名人堂", nav_game: "捕鱼", nav_shop: "商店", nav_top: "排行",
                 no_energy: "没有能量 💤", miss: "跑了!", caught: "钓到了:", lvl: "等级", chance: "几率",
                 none: "无", buy_success: "购买成功!", afk_income: "离线收益:", coins: "金币", loading: "加载中...",
-                ad_title: "免费能量", ad_desc: "+2000金币 & 100%能量", ad_btn: "观看",
+                ad_title: "免费能量", ad_desc: "大量金币 & 100%能量", ad_btn: "观看",
                 energy_label: "能量",
                 top_rich: "富豪", top_fish: "渔夫", top_eco: "生态",
                 period_week: "周", period_month: "月", period_year: "年", period_all: "总榜",
@@ -446,8 +444,8 @@
                 empty_list: "列表为空...", total_players: "玩家总数:",
                 shop_equip: "装备", shop_consum: "消耗品",
                 item_energy_drink: "能量饮料", desc_energy: "恢复 50% 能量",
-                item_bait_common: "蠕虫 (10个)", desc_bait_common: "+10% 几率",
-                item_bait_rare: "活饵 (5个)", desc_bait_rare: "+30% 几率 & 无垃圾"
+                item_bait_common: "蠕虫 (10个)", desc_bait_common: "+15% 几率",
+                item_bait_rare: "活饵 (5个)", desc_bait_rare: "+35% 几率 & 稀有鱼"
             }
         };
 
@@ -586,17 +584,15 @@
             if (isFishing) return; 
 
             const t = translations[currentLang];
-            if (state.en < 1) { 
+            if (state.en < 2) { 
                 tg.HapticFeedback.notificationOccurred('warning');
                 showFloat(e.clientX, e.clientY, "💤", "#94a3b8");
                 return; 
             }
 
             isFishing = true; 
-            let cost = 1;
-            if (state.en <= 50) cost = 2;
-            if (state.en <= 20) cost = 4;
-            state.en = Math.max(0, state.en - cost); 
+            // Визуально отнимаем энергию (2% по новому балансу)
+            state.en = Math.max(0, state.en - 2); 
             render();
 
             const btn = document.getElementById('fish-btn');
@@ -610,6 +606,13 @@
                 });
                 let data = await res.json();
                 
+                // Проверка на анти-клик кулдаун
+                if (data.status === "cooldown") {
+                    // Просто игнорируем или показываем песочные часы
+                    isFishing = false;
+                    return; 
+                }
+
                 state.bal = data.balance;
                 state.en = data.energy; 
                 if(data.bait_common !== undefined) state.bait_c = data.bait_common;
@@ -636,7 +639,7 @@
                     pTitle.innerText = fName;
 
                     let weightText = "";
-                    if (data.is_trash) {
+                    if (data.is_trash && data.fish_id !== 'chest') {
                         weightText = `1 ${translations[currentLang].unit_pc}`;
                     } else {
                         weightText = `${data.weight} ${translations[currentLang].unit_kg}`;
@@ -662,7 +665,7 @@
                 }
             } catch (err) { 
                 console.error(err); 
-                state.en = Math.min(100, state.en + cost); 
+                state.en = Math.min(100, state.en + 2); 
             } finally {
                 isFishing = false;
                 render();
@@ -670,13 +673,11 @@
         }
 
         async function buy(item) {
-            // Цены для быстрой проверки на клиенте
-            const PRICES = { 'energy_drink': 500, 'bait_common': 100, 'bait_rare': 1000 };
-            
+            // Новая логика проверки цен перед отправкой запроса
             let price = 0;
             if (item === 'rod') price = state.p_rod;
             else if (item === 'boat') price = state.p_boat;
-            else if (PRICES[item]) price = PRICES[item];
+            else if (CONSUMABLES_INFO[item]) price = CONSUMABLES_INFO[item].price;
 
             if (state.bal < price) { tg.HapticFeedback.notificationOccurred('error'); return; }
 
@@ -703,7 +704,7 @@
             list.innerHTML = "";
             const t = translations[currentLang];
 
-            // 1. Реклама
+            // 1. Реклама (описание теперь берется из translations)
             list.innerHTML += `
             <div class="card" style="border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.1);">
                 <div class="card-icon">⚡</div>
@@ -715,7 +716,8 @@
             </div>`;
 
             if (currentShopTab === 'equip') {
-                const chance = 15 + (state.rod * 3);
+                // Базовый шанс теперь 30%, а не 15%
+                const chance = 30 + (state.rod * 4);
                 let btnRodText = state.p_rod ? `${state.p_rod.toLocaleString()} 💰` : "MAX";
                 let btnRodDisabled = (!state.p_rod || state.bal < state.p_rod) ? "disabled" : "";
                 
@@ -744,45 +746,20 @@
                 </div>`;
 
             } else {
-                // Расходники: ПРОВЕРКА БАЛАНСА
-                const pEnergy = 500;
-                const btnEnergyDisabled = state.bal < pEnergy ? 'disabled' : '';
-                
-                list.innerHTML += `
-                <div class="card">
-                    <div class="card-icon">🥤</div>
-                    <div class="card-info">
-                        <div class="card-title">${t.item_energy_drink}</div>
-                        <div class="card-sub">${t.desc_energy}</div>
-                    </div>
-                    <button class="btn" onclick="buy('energy_drink')" ${btnEnergyDisabled}>500 💰</button>
-                </div>`;
-
-                const pBaitCommon = 100;
-                const btnCommonDisabled = state.bal < pBaitCommon ? 'disabled' : '';
-
-                list.innerHTML += `
-                <div class="card">
-                    <div class="card-icon">🪱</div>
-                    <div class="card-info">
-                        <div class="card-title">${t.item_bait_common}</div>
-                        <div class="card-sub">${t.desc_bait_common}</div>
-                    </div>
-                    <button class="btn" onclick="buy('bait_common')" ${btnCommonDisabled}>100 💰</button>
-                </div>`;
-
-                const pBaitRare = 1000;
-                const btnRareDisabled = state.bal < pBaitRare ? 'disabled' : '';
-
-                list.innerHTML += `
-                <div class="card">
-                    <div class="card-icon">🐟</div>
-                    <div class="card-info">
-                        <div class="card-title">${t.item_bait_rare}</div>
-                        <div class="card-sub">${t.desc_bait_rare}</div>
-                    </div>
-                    <button class="btn" onclick="buy('bait_rare')" ${btnRareDisabled}>1000 💰</button>
-                </div>`;
+                // Расходники: Генерация через цикл по CONSUMABLES_INFO
+                for (const [key, info] of Object.entries(CONSUMABLES_INFO)) {
+                    const disabled = state.bal < info.price ? 'disabled' : '';
+                    
+                    list.innerHTML += `
+                    <div class="card">
+                        <div class="card-icon">${info.icon}</div>
+                        <div class="card-info">
+                            <div class="card-title">${t[info.name_key]}</div>
+                            <div class="card-sub">${t[info.desc_key]}</div>
+                        </div>
+                        <button class="btn" onclick="buy('${key}')" ${disabled}>${info.price} 💰</button>
+                    </div>`;
+                }
             }
         }
 
@@ -890,7 +867,7 @@
             document.querySelectorAll('.content').forEach(d => d.style.display = 'none');
             document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active'));
             document.getElementById('page-'+name).style.display = (name === 'top') ? 'flex' : (name === 'shop' ? 'flex' : 'flex');
-            // Для всех используем flex, у каждого #page свои настройки
+            
             el.classList.add('active');
             
             const balContainer = document.getElementById('main-balance-display');
