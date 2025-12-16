@@ -49,11 +49,10 @@
         }
         .balance-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px; opacity: 0.9; font-weight: 700; margin-bottom: 5px; color: #e2e8f0; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
-        /* --- КОНТЕНТ (ИЗМЕНЕНО) --- */
+        /* --- КОНТЕНТ --- */
         .content { 
             flex: 1; display: none; flex-direction: column; align-items: center; 
             width: 100%; position: relative; overflow: hidden; 
-            /* ИЗМЕНЕНО: 85px (высота меню) + 20px (отступ) = 105px */
             padding-bottom: 105px; 
             box-sizing: border-box;
         }
@@ -139,9 +138,8 @@
             overflow-y: auto; 
             display: flex; flex-direction: column; gap: 8px; 
             padding-right: 2px;
-            -webkit-overflow-scrolling: touch;
-            /* Добавил немного внутреннего отступа снизу списка */
             padding-bottom: 10px;
+            -webkit-overflow-scrolling: touch;
         }
         
         .shop-list::-webkit-scrollbar { width: 5px; display: block; }
@@ -184,7 +182,7 @@
         .float-text { position: absolute; font-weight: 900; font-size: 2rem; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 100; white-space: nowrap; text-shadow: 0 4px 10px rgba(0,0,0,0.8); -webkit-text-stroke: 1px rgba(0,0,0,0.2); }
         @keyframes floatUp { 0% { opacity: 0; transform: translateY(20px) scale(0.5); } 20% { opacity: 1; transform: translateY(0) scale(1.2); } 100% { opacity: 0; transform: translateY(-100px) scale(1); } }
 
-        /* --- POPUP --- */
+        /* --- POPUP (ИЗМЕНЕН) --- */
         .catch-popup {
             position: fixed !important; 
             top: 50% !important; 
@@ -206,10 +204,44 @@
         .catch-popup.show { 
             transform: translate(-50%, -50%) scale(1) !important; 
             opacity: 1 !important; 
+            pointer-events: auto !important; /* Включаем клики */
         }
         .catch-img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 15px; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.6)); }
         .catch-title { font-size: 1.4rem; font-weight: 900; color: white; margin-bottom: 8px; letter-spacing: 0.5px; }
         .catch-reward { font-size: 1.6rem; font-weight: 800; color: var(--gold); }
+
+        .popup-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn-claim {
+            background: var(--gold);
+            color: #0f172a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 1rem;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4);
+            cursor: pointer;
+        }
+
+        .btn-share {
+            background: var(--blue);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 1rem;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            cursor: pointer;
+        }
 
         /* --- НИЖНЕЕ МЕНЮ --- */
         .nav { 
@@ -240,7 +272,6 @@
             display: flex; flex-direction: column; gap: 0; 
             border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); 
             -webkit-overflow-scrolling: touch;
-            /* Добавил немного внутреннего отступа снизу списка */
             padding-bottom: 10px;
         }
         .leaderboard-list::-webkit-scrollbar { width: 5px; display: block; }
@@ -286,6 +317,10 @@
         <img id="popup-img" class="catch-img" src="" alt="Catch">
         <div id="popup-title" class="catch-title"></div>
         <div id="popup-reward" class="catch-reward"></div>
+        <div class="popup-buttons">
+            <button class="btn-share" onclick="shareCurrentCatch()" data-t="btn_share">📤 Share</button>
+            <button class="btn-claim" onclick="closePopup()" data-t="btn_claim">💰 Claim</button>
+        </div>
     </div>
 
     <div id="page-game" class="content active-page">
@@ -379,7 +414,6 @@
         
         let ADSGRAM_BLOCK_ID = null;
 
-        // --- КОНФИГУРАЦИЯ ЦЕН РАСХОДНИКОВ ---
         const CONSUMABLES_INFO = {
             'energy_drink': {price: 400, name_key: 'item_energy_drink', desc_key: 'desc_energy', icon: '🥤'},
             'bait_common': {price: 100, name_key: 'item_bait_common', desc_key: 'desc_bait_common', icon: '🪱'},
@@ -401,7 +435,9 @@
                 shop_equip: "Equipment", shop_consum: "Consumables",
                 item_energy_drink: "Energy Drink", desc_energy: "Restore 50% Energy",
                 item_bait_common: "Worms (10x)", desc_bait_common: "+15% Chance",
-                item_bait_rare: "Live Bait (5x)", desc_bait_rare: "+35% Chance & Rarer Fish"
+                item_bait_rare: "Live Bait (5x)", desc_bait_rare: "+35% Chance & Rarer Fish",
+                // НОВЫЕ КНОПКИ
+                btn_share: "📤 Share", btn_claim: "💰 Claim"
             },
             ru: {
                 score_label: "БАЛАНС", shop_title: "Рыболовный Рынок", item_rod: "Спиннинг", item_boat: "Траулер (AFK)",
@@ -417,7 +453,9 @@
                 shop_equip: "Снасти", shop_consum: "Припасы",
                 item_energy_drink: "Энергетик", desc_energy: "Восст. 50% сил",
                 item_bait_common: "Черви (10шт)", desc_bait_common: "+15% к шансу",
-                item_bait_rare: "Живец (5шт)", desc_bait_rare: "+35% шанс, лучше улов"
+                item_bait_rare: "Живец (5шт)", desc_bait_rare: "+35% шанс, лучше улов",
+                // НОВЫЕ КНОПКИ
+                btn_share: "📤 Поделиться", btn_claim: "💰 Забрать"
             },
             es: {
                 score_label: "BALANCE", shop_title: "Mercado de Pesca", item_rod: "Caña de Pescar", item_boat: "Barco (AFK)",
@@ -433,7 +471,9 @@
                 shop_equip: "Equipo", shop_consum: "Consumibles",
                 item_energy_drink: "Bebida Energética", desc_energy: "Restaura 50% Energía",
                 item_bait_common: "Gusanos (10x)", desc_bait_common: "+15% Probabilidad",
-                item_bait_rare: "Cebo Vivo (5x)", desc_bait_rare: "+35% Prob. & Mejor Pesca"
+                item_bait_rare: "Cebo Vivo (5x)", desc_bait_rare: "+35% Prob. & Mejor Pesca",
+                // НОВЫЕ КНОПКИ
+                btn_share: "📤 Compartir", btn_claim: "💰 Recoger"
             },
             zh: {
                 score_label: "余额", shop_title: "渔具商店", item_rod: "鱼竿", item_boat: "渔船 (挂机)",
@@ -449,7 +489,9 @@
                 shop_equip: "装备", shop_consum: "消耗品",
                 item_energy_drink: "能量饮料", desc_energy: "恢复 50% 能量",
                 item_bait_common: "蠕虫 (10个)", desc_bait_common: "+15% 几率",
-                item_bait_rare: "活饵 (5个)", desc_bait_rare: "+35% 几率 & 稀有鱼"
+                item_bait_rare: "活饵 (5个)", desc_bait_rare: "+35% 几率 & 稀有鱼",
+                // НОВЫЕ КНОПКИ
+                btn_share: "📤 分享", btn_claim: "💰 领取"
             }
         };
 
@@ -491,6 +533,7 @@
         let isMuted = false; 
         let musicStarted = false;
         let isFishing = false;
+        let lastCatchData = null; // Данные для шаринга
 
         let currentTopType = 'balance';
         let currentTopPeriod = 'all';
@@ -583,6 +626,20 @@
             } catch(e) { console.error(e); }                
         }
 
+        // --- НОВЫЕ ФУНКЦИИ ---
+        function closePopup() {
+            const popup = document.getElementById('catch-popup');
+            popup.classList.remove('show');
+            playSound('catch'); // звук монеток
+        }
+
+        function shareCurrentCatch() {
+            if (!lastCatchData) return;
+            const query = `${lastCatchData.id}|${lastCatchData.weight}|${lastCatchData.rarity}`;
+            tg.switchInlineQuery(query, ['users', 'groups']);
+        }
+        // ---------------------
+
         async function catchFish(e) {
             if (document.getElementById('catch-popup').classList.contains('show')) return;
             if (isFishing) return; 
@@ -648,8 +705,15 @@
                     
                     pReward.innerHTML = `<span style="color:var(--gold)">+${data.reward} 💰</span><br><span style="font-size:1.2rem; color:#cbd5e1">${weightText}</span>`;
                     
+                    // СОХРАНЯЕМ ДАННЫЕ
+                    lastCatchData = {
+                        id: data.fish_id,
+                        weight: data.weight,
+                        rarity: data.rarity || 1
+                    };
+
                     popup.classList.add('show');
-                    setTimeout(() => popup.classList.remove('show'), 1500);
+                    // АВТОЗАКРЫТИЕ УБРАНО!
 
                     showFloat(e.clientX, e.clientY, `+${data.reward}`, data.fish_color);
                     

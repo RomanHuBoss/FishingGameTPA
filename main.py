@@ -3,12 +3,13 @@ import logging
 import random
 import time
 import asyncio
+import hashlib  # Для генерации ID результата inline
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import WebAppInfo
+from aiogram.types import WebAppInfo, InlineQueryResultPhoto, InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, BigInteger, Integer, String, Float, Boolean, DateTime, desc, select, func
@@ -330,6 +331,7 @@ async def fish_action(data: ClickRequest):
             "status": "caught", 
             "fish_id": fish['id'], "fish_emoji": fish['emoji'], "fish_color": fish['color'],
             "reward": reward, "weight": weight, "is_trash": fish['is_trash'],
+            "rarity": fish.get('rarity', 1),
             "balance": user.balance, "energy": int(user.energy), 
             "afk_earned": afk_earned,
             "bait_common": user.bait_common,
@@ -456,6 +458,64 @@ async def get_leaderboard(type: str = "balance", period: str = "all"):
 async def start_command(message: types.Message):
     markup = types.InlineKeyboardMarkup(inline_keyboard=[[types.InlineKeyboardButton(text="🎣 Play", web_app=WebAppInfo(url=f"{WEBAPP_URL}/static/index.html"))]])
     await message.answer("Let's go fishing!", reply_markup=markup)
+
+# --- INLINE MODE (ПОДЕЛИТЬСЯ УЛОВОМ) ---
+@dp.inline_query()
+async def inline_share_catch(query: types.InlineQuery):
+    text = query.query.strip()
+    
+    # Ожидаем формат запроса: "fish_id|weight|rarity"
+    # Если придет мусор, просто игнорируем
+    if not text or "|" not in text:
+        return
+
+    try:
+        # Разбиваем текст по разделителю
+        parts = text.split("|")
+        
+        # Берем данные, только если есть хотя бы 2 части (id и weight)
+        if len(parts) < 2:
+            return
+            
+        fish_id = parts[0]
+        weight = parts[1]
+        # rarity = parts[2] # Пока не используем, но в строке оно есть
+        
+        # Ссылка на картинку (ВАЖНО: Должна быть HTTPS и доступна из интернета)
+        # Убедитесь, что в config.yaml WEBAPP_URL ведет на реальный домен
+        thumb_url = f"{WEBAPP_URL}/static/images/{fish_id}.png"
+        
+        # Формируем текст сообщения
+        caption = f"🎣 <b>Look at this catch!</b>\n\n" \
+                  f"🐠 <b>Fish:</b> {fish_id.capitalize()}\n" \
+                  f"⚖️ <b>Weight:</b> {weight} kg\n" \
+                  f"🔥 <b>Can you do better?</b>"
+
+        # Кнопка под картинкой
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="🎣 Try to catch better!", web_app=WebAppInfo(url=f"{WEBAPP_URL}/static/index.html"))
+        ]])
+
+        # Создаем результат
+        # id должен быть уникальным для каждого запроса, используем хэш
+        result_id = hashlib.md5(text.encode()).hexdigest()
+
+        result = InlineQueryResultPhoto(
+            id=result_id,
+            photo_url=thumb_url,
+            thumbnail_url=thumb_url,
+            title="Share Catch",
+            caption=caption,
+            parse_mode="HTML",
+            reply_markup=keyboard
+        )
+
+        # cache_time=0 чтобы при отладке изменения применялись сразу
+        await query.answer([result], cache_time=0, is_personal=True)
+        
+    except Exception as e:
+        # Логируем ошибку, чтобы видеть её в консоли
+        logging.error(f"Inline error: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
