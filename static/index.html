@@ -53,46 +53,54 @@
         .content { 
             flex: 1; display: none; flex-direction: column; align-items: center; 
             width: 100%; position: relative; overflow: hidden; 
+            /* Добавлено: отступ снизу, чтобы контент не улетал под меню */
+            padding-bottom: 90px; 
+            box-sizing: border-box;
         }
         .active-page { display: flex; } 
         #page-game { justify-content: center; }
 
-        /* --- ИГРА (Updated sizes) --- */
-        .game-area { position: relative; display: flex; flex-direction: column; align-items: center; }
+        /* --- ИГРА (Исправлены размеры) --- */
+        .game-area { 
+            position: relative; display: flex; flex-direction: column; align-items: center; 
+            width: 100%; justify-content: center; flex: 1;
+        }
         
         .fish-btn { 
-            /* УВЕЛИЧЕНО: Было 240px, стало 320px */
-            width: 320px; height: 320px; border-radius: 50%; 
+            /* ИСПРАВЛЕНО: Уменьшен размер (было 320px) и добавлена адаптивность */
+            width: 220px; height: 220px; 
+            max-width: 35vh; max-height: 35vh; /* Чтобы не занимал весь экран */
+            border-radius: 50%; 
             background: url('/static/images/float.png') center/contain no-repeat;
             filter: drop-shadow(0 20px 50px rgba(0,0,0,0.5));
             cursor: pointer; transition: transform 0.1s; z-index: 10; position: relative;
             display: flex; justify-content: center; align-items: flex-end; 
+            margin-bottom: 10px;
         }
         .fish-btn:active { transform: scale(0.94); }
         .fish-btn::after {
-            /* УВЕЛИЧЕНО: Было 180px, стало 260px. Отступ (margin-left) половина ширины */
-            content: ''; position: absolute; width: 260px; height: 260px; bottom: 15px; left: 50%; margin-left: -130px;
+            /* ИСПРАВЛЕНО: Уменьшена анимация под новый размер */
+            content: ''; position: absolute; width: 180px; height: 180px; bottom: 10px; left: 50%; margin-left: -90px;
             border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.3);
             animation: ripple 2s infinite; z-index: -1; opacity: 0; pointer-events: none;
         }
         @keyframes ripple { 0% { transform: scale(0.8); opacity: 0.6; } 100% { transform: scale(1.6); opacity: 0; } }
 
         .energy-wrapper { 
-            width: 220px; text-align: center; margin-top: 20px; 
+            width: 220px; text-align: center; margin-top: 15px; 
             background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 40px; 
             backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); 
+            flex-shrink: 0; /* Не сжимать */
         }
         .energy-box { width: 100%; height: 8px; background: rgba(255,255,255,0.15); border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
         .energy-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); transition: width 0.3s; box-shadow: 0 0 10px rgba(59, 130, 246, 0.6); }
         .energy-text { font-size: 0.75rem; color: #fff; font-weight: 700; letter-spacing: 0.5px; }
 
-        /* --- МАГАЗИН (Updated Padding) --- */
+        /* --- МАГАЗИН (Исправлен отступ) --- */
         #page-shop { 
             height: 100%; 
-            /* ИЗМЕНЕНО: Было 20px, стало 80px чтобы не наезжать на флаги */
-            padding-top: 80px; 
-            padding-bottom: 20px;
-            box-sizing: border-box;
+            /* ИСПРАВЛЕНО: Было 80px, стало 20px по просьбе */
+            padding-top: 20px; 
             justify-content: flex-start;
         }
 
@@ -132,10 +140,16 @@
             width: 100%; 
             flex: 1; 
             overflow-y: auto; 
-            scrollbar-width: none; 
+            /* ИСПРАВЛЕНО: Удален scrollbar-width: none */
             display: flex; flex-direction: column; gap: 8px; 
+            padding-right: 2px; /* Место для скролла */
+            -webkit-overflow-scrolling: touch;
         }
-        .shop-list::-webkit-scrollbar { display: none; }
+        
+        /* ИСПРАВЛЕНО: Добавлены стили для аккуратного скролла */
+        .shop-list::-webkit-scrollbar { width: 5px; display: block; }
+        .shop-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 3px; }
+        .shop-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
 
         .card { 
             background: rgba(30, 41, 59, 0.7); 
@@ -157,7 +171,6 @@
         .btn:disabled { background: #334155; opacity: 0.6; box-shadow: none; color: #64748b; pointer-events: none; }
         .btn-ad { background: var(--green); color: white; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; animation: pulse 2s infinite; cursor: pointer; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3); text-transform: uppercase; min-width: 70px; }
 
-        /* Стиль для футера в магазине */
         .shop-footer-balance {
             margin-top: 15px;
             font-size: 1rem;
@@ -208,25 +221,37 @@
             display: flex; justify-content: space-around; align-items: center; 
             border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; z-index: 100; 
             padding-bottom: 15px; padding-top: 12px; box-sizing: border-box; 
+            position: fixed; bottom: 0; left: 0; /* Фиксируем меню */
         }
         .nav-item { color: #64748b; font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; padding: 0; transition: 0.2s; width: 60px; font-weight: 700; justify-content: center; letter-spacing: 0.5px; }
         .nav-item.active { color: var(--blue); transform: translateY(-3px); text-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
         .nav-icon { font-size: 1.6rem; margin-bottom: 4px; }
         
-        /* --- ТОП (Updated Padding) --- */
+        /* --- ТОП (Исправлен отступ) --- */
         #page-top { 
             height: 100%; 
-            /* ИЗМЕНЕНО: Было 20px, стало 80px чтобы контент был ниже флагов */
-            padding-top: 80px; 
-            padding-bottom: 20px; box-sizing: border-box; display: none; flex-direction: column; align-items: center; justify-content: flex-start; 
+            /* ИСПРАВЛЕНО: Было 80px, стало 20px */
+            padding-top: 20px; 
+            box-sizing: border-box; display: none; flex-direction: column; align-items: center; justify-content: flex-start; 
         }
         .leaderboard-panel { width: 94%; flex: 1; background: var(--glass-bg); backdrop-filter: blur(15px); border-radius: 24px; border: var(--glass-border); padding: 20px 15px; box-sizing: border-box; display: flex; flex-direction: column; min-height: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
         .tabs-container { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; flex-shrink: 0; }
         .tabs-row { display: flex; justify-content: space-between; background: rgba(0, 0, 0, 0.4); border-radius: 12px; padding: 4px; border: 1px solid rgba(255,255,255,0.05); }
         .tab { flex: 1; text-align: center; padding: 8px 0; font-size: 0.8rem; border-radius: 10px; cursor: pointer; color: #94a3b8; font-weight: 700; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .tab.active { background: var(--blue); color: white; box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4); }
-        .leaderboard-list { width: 100%; flex: 1; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 0; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .leaderboard-list::-webkit-scrollbar { display: none; }
+        
+        .leaderboard-list { 
+            width: 100%; flex: 1; overflow-y: auto; 
+            /* ИСПРАВЛЕНО: Удален scrollbar-width: none */
+            display: flex; flex-direction: column; gap: 0; 
+            border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); 
+            -webkit-overflow-scrolling: touch;
+        }
+        /* ИСПРАВЛЕНО: Добавлены стили скролла */
+        .leaderboard-list::-webkit-scrollbar { width: 5px; display: block; }
+        .leaderboard-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 3px; }
+        .leaderboard-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
+
         .leader-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); font-weight: 600; font-size: 0.95rem; color: #f1f5f9; flex-shrink: 0; }
         .leader-row:last-child { border-bottom: none; }
         .leader-left { display: flex; align-items: center; gap: 12px; }
